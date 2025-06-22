@@ -25,10 +25,18 @@ router.get('/listarBoletas', (req, res) => __awaiter(void 0, void 0, void 0, fun
         }
     }
 }));
-router.get('/crearBoleta', (req, res) => {
-    res.render('crearBoleta', { pagina: 'Crear Boleta' });
-});
-// Aquí usamos el middleware validar() que debe devolver un array
+// Aquí llamamos a mostrarCrear que prepara el formulario con datos necesarios
+router.get('/crearBoleta', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, boletaController_1.mostrarCrear)(req, res);
+    }
+    catch (err) {
+        if (err instanceof Error) {
+            res.status(500).send(err.message);
+        }
+    }
+}));
+// Middleware de validación antes de insertar
 router.post('/', (0, boletaController_1.validar)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield (0, boletaController_1.insertar)(req, res);

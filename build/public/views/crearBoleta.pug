@@ -1,0 +1,82 @@
+extends layout
+
+block contenido
+  h2 Crear Boleta
+
+  if errors && errors.length
+    ul(style="color: red;")
+      each error in errors
+        li= error.msg
+
+  style.
+    form div {
+      margin-bottom: 1rem;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      max-width: 500px;
+      padding: 0.4rem;
+      font-size: 1rem;
+    }
+
+  form(action="/boletas" method="POST")
+    fieldset
+      legend Datos del Cliente
+      div
+        label(for="clienteNombre") Nombre:
+        input(type="text" name="clienteNombre" id="clienteNombre" required value=boleta.clienteNombre || '')
+      div
+        label(for="clienteDomicilio") Domicilio:
+        input(type="text" name="clienteDomicilio" id="clienteDomicilio" value=boleta.clienteDomicilio || '')
+      div
+        label(for="clienteTelefono") Teléfono:
+        input(type="text" name="clienteTelefono" id="clienteTelefono" required value=boleta.clienteTelefono || '')
+
+    fieldset
+      legend Datos de la Boleta
+      div
+        label(for="articulo") Artículo:
+        input(type="text" name="articulo" id="articulo" required value=boleta.articulo || '')
+      div
+        label(for="marca") Marca:
+        input(type="text" name="marca" id="marca" required value=boleta.marca || '')
+      div
+        label(for="modelo") Modelo:
+        input(type="text" name="modelo" id="modelo" required value=boleta.modelo || '')
+      div
+        label(for="falla") Falla:
+        textarea(name="falla" id="falla" required)= boleta.falla || ''
+
+    fieldset
+      legend Condiciones Iniciales
+      each condicion in condicionesOpciones
+        div
+          - var checked = false;
+          if boleta.condiciones_iniciales
+            - checked = boleta.condiciones_iniciales.includes(condicion)
+          input(type="checkbox" name="condiciones_iniciales" value=condicion id=condicion checked=checked)
+          label(for=condicion)= ' ' + condicion
+
+    fieldset
+      legend Otros Datos
+      div
+        label(for="observaciones") Observaciones:
+        textarea(name="observaciones" id="observaciones")= boleta.observaciones || ''
+      div
+        label(for="fecha_ingreso") Fecha de Ingreso:
+        input(type="date" name="fecha_ingreso" id="fecha_ingreso" required value=boleta.fecha_ingreso || '')
+      div
+        label(for="fecha_reparacion") Fecha de Reparación:
+        input(type="date" name="fecha_reparacion" id="fecha_reparacion" value=boleta.fecha_reparacion || '')
+      div
+        label(for="senado") Señado:
+        input(type="number" step="0.01" min="0" name="senado" id="senado" value=boleta.senado || 0)
+      div
+        label(for="total") Total:
+        input(type="number" step="0.01" min="0" name="total" id="total" value=boleta.total || 0)
+
+    div
+      button(type="submit" style="background-color: #90000a; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px;") Crear

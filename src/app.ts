@@ -9,11 +9,13 @@ import boletaRouter from './routes/boletaRouter';
 
 const app = express();
 
-// Configurar motor de vistas (opcional, solo si usás Pug)
+// Configurar motor de vistas (Pug)
 app.set('view engine', 'pug');
+
+// Las vistas están en build/public/views
 app.set('views', path.join(__dirname, 'public', 'views'));
 
-// Carpeta pública para archivos estáticos
+// Carpeta pública para archivos estáticos (CSS, imágenes, JS)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware
@@ -25,9 +27,9 @@ app.use(cors());
 
 // Ruta principal
 app.get('/', (req: Request, res: Response) => {
-    res.render('layout', {
-        pagina: 'Gestor de Taller',
-    });
+  res.render('index', {
+    pagina: 'Inicio',
+  });
 });
 
 // Rutas específicas

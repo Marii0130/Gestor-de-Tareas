@@ -5,7 +5,8 @@ import {
   insertar,
   modificar,
   eliminar,
-  validar
+  validar,
+  mostrarCrear
 } from '../controllers/boletaController';
 
 const router = express.Router();
@@ -20,11 +21,18 @@ router.get('/listarBoletas', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/crearBoleta', (req: Request, res: Response) => {
-  res.render('crearBoleta', { pagina: 'Crear Boleta' });
+// Aquí llamamos a mostrarCrear que prepara el formulario con datos necesarios
+router.get('/crearBoleta', async (req: Request, res: Response) => {
+  try {
+    await mostrarCrear(req, res);
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
+    }
+  }
 });
 
-// Aquí usamos el middleware validar() que debe devolver un array
+// Middleware de validación antes de insertar
 router.post('/', validar(), async (req: Request, res: Response) => {
   try {
     await insertar(req, res);

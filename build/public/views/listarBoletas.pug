@@ -1,0 +1,25 @@
+extends layout
+
+block contenido
+  h2 Lista de Boletas
+  a(href="/boletas/crearBoleta", style="background-color: #90000a; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 5px; float: right;") Crear Boleta
+  table(border="1" cellpadding="10" cellspacing="0" style="width: 100%; margin-top: 2rem; background-color: white;")
+    thead
+      tr
+        //- th ID  <-- eliminado
+        th Cliente
+        th Artículo
+        th Marca
+        th Modelo
+        th Falla
+        th Estado
+    tbody
+      each boleta in boletas
+        tr
+          //- td= boleta.id  <-- eliminado
+          td= boleta.cliente.nombre
+          td= boleta.articulo
+          td= boleta.marca
+          td= boleta.modelo
+          td= boleta.falla
+          td= boleta.estado

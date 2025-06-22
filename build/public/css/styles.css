@@ -1,0 +1,59 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  color: #000;
+  background-color: #fff;
+  height: 100%;
+  overflow: hidden; /* 🔒 Evita scroll innecesario */
+  box-sizing: border-box;
+}
+
+/* Header fijo */
+header {
+  background-color: #90000a;
+  color: #fff;
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+/* Navegación */
+nav a {
+  color: #fff;
+  margin-left: 1rem;
+  text-decoration: none;
+}
+
+/* Contenido general */
+.contenido {
+  margin-top: 60px; /* Deja espacio para el header */
+  height: calc(100vh - 60px); /* ✅ Solo ocupa el espacio restante */
+  overflow-y: auto; /* ✅ scroll solo si hay más contenido */
+  box-sizing: border-box;
+  padding: 2rem;
+}
+
+/* Página de inicio: logo centrado */
+.logo-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Imagen del logo */
+.logo-container img {
+  max-height: 80%;
+  max-width: 80%;
+  object-fit: contain;
+}
