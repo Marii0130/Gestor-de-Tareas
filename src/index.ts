@@ -1,5 +1,5 @@
 import app from './app';
-import { initializeDatabase } from './bd/conexion'; // archivo que tenés que crear
+import { initializeDatabase } from './db/conexion'; // archivo que tenés que crear
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -27,5 +27,9 @@ async function main() {
     }
   }
 }
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_PASSWORD:', process.env.DB_PASSWORD === '' ? '(vacío)' : process.env.DB_PASSWORD);
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_NAME:', process.env.DB_NAME);
 
 main();

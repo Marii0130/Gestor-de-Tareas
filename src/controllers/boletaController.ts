@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AppDataSource } from '../bd/conexion';
+import { AppDataSource } from '../db/conexion';
 import { Boleta } from '../models/boletaModel';
 import { Cliente } from '../models/clienteModel';
 import { body, validationResult } from 'express-validator';
