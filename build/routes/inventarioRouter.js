@@ -100,4 +100,5 @@ router.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(500).render('error', { mensaje: 'Error al eliminar producto', detalles: msg });
     }
 }));
+router.get('/alertas', inventarioController_1.alertasInventario);
 exports.default = router;

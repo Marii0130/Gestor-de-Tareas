@@ -117,3 +117,17 @@ export const validarProducto = () => [
   body('precio_venta').isFloat({ min: 0 }).withMessage('El precio de venta debe ser válido'),
   body('stock_minimo').isInt({ min: 0 }).withMessage('El stock mínimo debe ser un número positivo')
 ];
+
+export const alertasInventario = async (req: Request, res: Response) => {
+  try {
+    const productos = await productoRepo.find();
+    const productosConBajoStock = productos.filter(p => p.stock <= p.stock_minimo);
+
+    res.render('alertasInventario', {
+      productos: productosConBajoStock,
+      pagina: 'Alertas de Inventario'
+    });
+  } catch (error) {
+    res.status(500).render('error', { mensaje: 'Error al obtener alertas de inventario' });
+  }
+};

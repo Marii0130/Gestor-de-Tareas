@@ -3,6 +3,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
 import methodOverride from 'method-override';
+import { AppDataSource } from './db/conexion';
+import { Producto } from './models/productoModel';
 
 import boletaRouter from './routes/boletaRouter';
 import inventarioRouter from './routes/inventarioRouter';
@@ -26,10 +28,19 @@ app.use(morgan('dev'));
 app.use(cors());
 
 // Ruta principal
-app.get('/', (req: Request, res: Response) => {
-  res.render('index', {
-    pagina: 'Inicio',
-  });
+app.get('/', async (req: Request, res: Response) => {
+  try {
+    const productoRepo = AppDataSource.getRepository(Producto);
+    const productos = await productoRepo.find();
+    const alertas = productos.filter(p => p.stock <= p.stock_minimo);
+
+    res.render('index', {
+      pagina: 'Inicio',
+      alertas
+    });
+  } catch (error) {
+    res.status(500).render('error', { mensaje: 'Error al cargar el inicio' });
+  }
 });
 
 // Rutas específicas

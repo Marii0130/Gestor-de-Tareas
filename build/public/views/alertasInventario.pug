@@ -1,0 +1,29 @@
+extends layout
+
+block contenido
+  h2(style="text-align: center; margin-bottom: 1rem;") Productos con Bajo Stock
+
+  if productos.length
+    .tabla-container(style="display: flex; justify-content: center;")
+      table(border="1", cellpadding="10", cellspacing="0", style="width: 90%; border-collapse: collapse;")
+        thead
+          tr(style="background-color: #f0f0f0; text-align: center;")
+            th Nombre
+            th Categoría
+            th Stock Actual
+            th Stock Mínimo
+        tbody
+          each producto in productos
+            tr(style="text-align: center;")
+              td= producto.nombre
+              td= producto.categoria
+              td(
+                style= producto.stock === 0 
+                  ? 'background-color: #f8d7da; color: #721c24; font-weight: bold; border-radius: 4px;'
+                  : (producto.stock <= producto.stock_minimo 
+                    ? 'background-color: #fff3cd; color: #856404; font-weight: bold; border-radius: 4px;'
+                    : '')
+              )= producto.stock
+              td= producto.stock_minimo
+  else
+    p(style="text-align: center;") No hay productos con bajo stock.

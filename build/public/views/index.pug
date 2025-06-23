@@ -1,5 +1,16 @@
 extends layout
 
 block contenido
-  .logo-container
-    img.logo(src="/img/logo.jpeg", alt="Logo del negocio")
+  .contenedor-principal
+    .logo-container(style="text-align: center; margin-bottom: 2rem;")
+      img.logo(src="/img/logo.jpeg", alt="Logo del negocio", style="max-width: 250px; border-radius: 10px;")
+
+    h2(style="text-align: center; margin-bottom: 2rem;") Bienvenido al Sistema de Gestión del Taller de Reparación G.V.
+
+    if alertas && alertas.length
+      .alerta-roja(style="text-align: center; margin-top: 1rem;")
+        p(style="color: red; font-weight: bold;") ⚠️ Hay productos con bajo stock.
+        a(href="/inventario/alertas", style="display: inline-block; margin-top: 0.5rem; color: #007bff; text-decoration: underline;") Dirígete al apartado de alertas →
+    else
+      .alerta-verde(style="text-align: center; margin-top: 1rem;")
+        p(style="color: green; font-weight: bold;") ✅ Todo está en orden. No hay alertas activas.

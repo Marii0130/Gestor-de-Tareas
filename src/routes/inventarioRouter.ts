@@ -7,7 +7,8 @@ import {
   insertar,
   modificar,
   eliminar,
-  validarProducto
+  validarProducto,
+  alertasInventario
 } from '../controllers/inventarioController';
 
 const router = express.Router();
@@ -98,5 +99,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     res.status(500).render('error', { mensaje: 'Error al eliminar producto', detalles: msg });
   }
 });
+
+router.get('/alertas', alertasInventario);
 
 export default router;

@@ -8,11 +8,13 @@ block contenido
       width: 100%;
       background-color: #f2f2f2;
       border-collapse: collapse;
+      text-align: center;
     }
     th, td {
       padding: 0.7rem;
       border: 1px solid #ccc;
       color: #000;
+      vertical-align: middle;
     }
     thead {
       background-color: #dcdcdc;
@@ -22,34 +24,17 @@ block contenido
       background-color: #d6d6d6;
       cursor: pointer;
     }
-    .estado-recibido {
-      background-color: #eeeeee;
-    }
-    .estado-en_diagnostico {
-      background-color: #fff7cc;
-    }
-    .estado-presupuesto_enviado {
-      background-color: #ffe0b3;
-    }
-    .estado-aprobado {
-      background-color: #d6f5d6;
-    }
-    .estado-reparando {
-      background-color: #fff9cc;
-    }
-    .estado-esperando_repuestos {
-      background-color: #f3e6ff;
-    }
-    .estado-reparado {
-      background-color: #ccffcc;
-    }
-    .estado-entregado {
-      background-color: #8fff8f;
-    }
+
+    .estado-recibido { background-color: #eeeeee; }
+    .estado-en_diagnostico { background-color: #fff7cc; }
+    .estado-presupuesto_enviado { background-color: #ffe0b3; }
+    .estado-aprobado { background-color: #d6f5d6; }
+    .estado-reparando { background-color: #fff9cc; }
+    .estado-esperando_repuestos { background-color: #f3e6ff; }
+    .estado-reparado { background-color: #ccffcc; }
+    .estado-entregado { background-color: #8fff8f; }
     .estado-cancelado,
-    .estado-no_reparado {
-      background-color: #ffcccc;
-    }
+    .estado-no_reparado { background-color: #ffcccc; }
 
     .modal {
       display: none;
@@ -69,6 +54,27 @@ block contenido
       position: relative;
     }
 
+    .boton {
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+    }
+
+    .boton.crear { background-color: #90000a; }
+    .boton.modificar { background-color: #004080; }
+    .boton.eliminar { background-color: #90000a; }
+    .boton.cerrar { background-color: #888; }
+
+    .boton.crear:hover { background-color: #6e0007; }
+    .boton.modificar:hover { background-color: #003366; }
+    .boton.eliminar:hover { background-color: #6e0007; }
+    .boton.cerrar:hover { background-color: #555; }
+
   script.
     function abrirModal(boletaId) {
       const modal = document.getElementById('modal-' + boletaId);
@@ -82,7 +88,8 @@ block contenido
 
   a(
     href="/boletas/crearBoleta",
-    style="background-color: #90000a; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 5px; float: right;"
+    class="boton crear",
+    style="float: right; margin-bottom: 1rem;"
   ) Crear Boleta
 
   table
@@ -151,11 +158,7 @@ block contenido
             |  $#{boleta.total}
 
         div(style="margin-top: 2rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;")
-          a(href="/boletas/modificarBoleta/" + boleta.id, style="background-color: #004080; color: white; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none;") Modificar
+          a(href="/boletas/modificarBoleta/" + boleta.id, class="boton modificar") Modificar
           form(method="POST", action="/boletas/" + boleta.id + "?_method=DELETE", onsubmit="return confirm('¿Estás seguro de eliminar esta boleta?');")
-            button(type="submit", style="background-color: #90000a; color: white; padding: 0.5rem 1rem; border-radius: 5px; border: none;") Eliminar
-          button(
-  type="button",
-  onclick=`cerrarModal(${boleta.id})`,
-  style="background-color: #888; color: white; padding: 0.5rem 1rem; border-radius: 5px; border: none;"
-) Cerrar
+            button(type="submit", class="boton eliminar") Eliminar
+          button(type="button", onclick=`cerrarModal(${boleta.id})`, class="boton cerrar") Cerrar

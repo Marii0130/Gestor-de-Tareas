@@ -3,6 +3,40 @@ extends layout
 block contenido
   h2 Crear Producto
 
+  style.
+    .form-grupo {
+      margin-bottom: 1rem;
+      max-width: 500px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .boton-crear {
+      background-color: #007bff;
+      color: white;
+      padding: 0.5rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .boton-crear:hover {
+      background-color: #0056b3;
+    }
+
+    ul.errores {
+      color: red;
+      margin-bottom: 1rem;
+    }
+
   if errors.length
     ul.errores
       each error in errors
@@ -40,4 +74,4 @@ block contenido
       input(type="number", name="stock_minimo", id="stock_minimo", min="0", value=producto.stock_minimo || 0, required)
 
     .form-grupo
-      button(type="submit") Crear Producto
+      button(type="submit", class="boton-crear") Crear Producto

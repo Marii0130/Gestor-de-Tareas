@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validarProducto = exports.eliminar = exports.modificar = exports.insertar = exports.mostrarCrear = exports.consultarUno = exports.listarProductos = exports.categoriasDisponibles = void 0;
+exports.alertasInventario = exports.validarProducto = exports.eliminar = exports.modificar = exports.insertar = exports.mostrarCrear = exports.consultarUno = exports.listarProductos = exports.categoriasDisponibles = void 0;
 const conexion_1 = require("../db/conexion");
 const productoModel_1 = require("../models/productoModel");
 const express_validator_1 = require("express-validator");
@@ -127,3 +127,17 @@ const validarProducto = () => [
     (0, express_validator_1.body)('stock_minimo').isInt({ min: 0 }).withMessage('El stock mínimo debe ser un número positivo')
 ];
 exports.validarProducto = validarProducto;
+const alertasInventario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const productos = yield productoRepo.find();
+        const productosConBajoStock = productos.filter(p => p.stock <= p.stock_minimo);
+        res.render('alertasInventario', {
+            productos: productosConBajoStock,
+            pagina: 'Alertas de Inventario'
+        });
+    }
+    catch (error) {
+        res.status(500).render('error', { mensaje: 'Error al obtener alertas de inventario' });
+    }
+});
+exports.alertasInventario = alertasInventario;

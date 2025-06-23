@@ -1,33 +1,98 @@
 extends layout
 
 block contenido
-  h2 Listado de Productos
+  style.
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 0.95rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
 
-  a(href="/inventario/crear", style="margin-bottom: 1rem; display: inline-block; background: #007bff; color: white; padding: 0.5rem 1rem; border-radius: 5px;") Nuevo Producto
+    .btn-crear {
+      background-color: #007bff;
+    }
+    .btn-crear:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-modificar {
+      background-color: orange;
+    }
+    .btn-modificar:hover {
+      background-color: darkorange;
+    }
+
+    .btn-eliminar {
+      background-color: red;
+    }
+    .btn-eliminar:hover {
+      background-color: darkred;
+    }
+
+    .tabla-container {
+      display: flex;
+      justify-content: center;
+    }
+
+    table {
+      width: 90%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: center;
+      padding: 10px;
+    }
+
+    thead {
+      background-color: #f0f0f0;
+    }
+
+    .btn-contenedor {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1rem;
+    }
+
+  h2(style="text-align: center; margin-bottom: 1rem;") Listado de Productos
+
+  .btn-contenedor
+    a.btn.btn-crear(href="/inventario/crear") Nuevo Producto
 
   if productos.length
-    table(border="1", cellpadding="10", cellspacing="0", style="width: 100%; margin-top: 1rem;")
-      thead
-        tr
-          th Nombre
-          th Categoría
-          th Stock
-          th Precio Compra
-          th Precio Venta
-          th Acciones
-      tbody
-        each producto in productos
+    .tabla-container
+      table(border="1", cellpadding="10", cellspacing="0")
+        thead
           tr
-            td= producto.nombre
-            td= producto.categoria
-            td= producto.stock
-            td $#{producto.precio_compra}
-            td $#{producto.precio_venta}
-            td
-              form(action=`/inventario/modificar/${producto.id}`, method="GET", style="display:inline")
-                button(
-                  type="submit", style="margin-right: 0.5rem; background: orange; color: white; border: none; padding: 0.3rem 0.7rem; border-radius: 3px;") Modificar
-              form(action=`/inventario/${producto.id}?_method=DELETE`, method="POST", style="display:inline")
-                button(type="submit", onclick="return confirm('¿Eliminar este producto?')", style="background: red; color: white; border: none; padding: 0.3rem 0.7rem; border-radius: 3px;") Eliminar
+            th Nombre
+            th Categoría
+            th Stock
+            th Precio Compra
+            th Precio Venta
+            th Acciones
+        tbody
+          each producto in productos
+            tr
+              td= producto.nombre
+              td= producto.categoria
+              td(
+                style= producto.stock === 0 
+                  ? 'background-color: #f8d7da; color: #721c24; font-weight: bold; border-radius: 4px;'
+                  : (producto.stock <= producto.stock_minimo 
+                    ? 'background-color: #fff3cd; color: #856404; font-weight: bold; border-radius: 4px;'
+                    : '')
+              )= producto.stock
+              td $#{producto.precio_compra}
+              td $#{producto.precio_venta}
+              td
+                form(action=`/inventario/modificar/${producto.id}`, method="GET", style="display:inline")
+                  button.btn.btn-modificar(type="submit") Modificar
+                form(action=`/inventario/${producto.id}?_method=DELETE`, method="POST", style="display:inline")
+                  button.btn.btn-eliminar(type="submit", onclick="return confirm('¿Eliminar este producto?')") Eliminar
   else
-    p No hay productos registrados.
+    p(style="text-align: center;") No hay productos registrados.
