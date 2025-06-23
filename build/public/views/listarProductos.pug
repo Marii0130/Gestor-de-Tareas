@@ -14,7 +14,6 @@ block contenido
           th Stock
           th Precio Compra
           th Precio Venta
-          th Stock Mínimo
           th Acciones
       tbody
         each producto in productos
@@ -24,9 +23,10 @@ block contenido
             td= producto.stock
             td $#{producto.precio_compra}
             td $#{producto.precio_venta}
-            td= producto.stock_minimo
             td
-              a(href=`/inventario/modificar/${producto.id}`, style="margin-right: 0.5rem;") Modificar
+              form(action=`/inventario/modificar/${producto.id}`, method="GET", style="display:inline")
+                button(
+                  type="submit", style="margin-right: 0.5rem; background: orange; color: white; border: none; padding: 0.3rem 0.7rem; border-radius: 3px;") Modificar
               form(action=`/inventario/${producto.id}?_method=DELETE`, method="POST", style="display:inline")
                 button(type="submit", onclick="return confirm('¿Eliminar este producto?')", style="background: red; color: white; border: none; padding: 0.3rem 0.7rem; border-radius: 3px;") Eliminar
   else
