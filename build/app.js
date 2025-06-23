@@ -9,6 +9,7 @@ const morgan_1 = __importDefault(require("morgan"));
 const path_1 = __importDefault(require("path"));
 const method_override_1 = __importDefault(require("method-override"));
 const boletaRouter_1 = __importDefault(require("./routes/boletaRouter"));
+const inventarioRouter_1 = __importDefault(require("./routes/inventarioRouter"));
 const app = (0, express_1.default)();
 // Configurar motor de vistas (Pug)
 app.set('view engine', 'pug');
@@ -30,4 +31,5 @@ app.get('/', (req, res) => {
 });
 // Rutas específicas
 app.use('/boletas', boletaRouter_1.default);
+app.use('/inventario', inventarioRouter_1.default);
 exports.default = app;

@@ -1,0 +1,31 @@
+extends layout
+
+block contenido
+  h2 Modificar Producto
+
+  if errors.length
+    ul(style="color: red")
+      each error in errors
+        li= error.msg
+
+  form(action=`/inventario/${producto.id}?_method=PUT`, method="POST")
+    div
+      label(for="nombre") Nombre:
+      input(type="text", name="nombre", id="nombre", value=producto.nombre || '')
+    div
+      label(for="categoria") Categoría:
+      input(type="text", name="categoria", id="categoria", value=producto.categoria || '')
+    div
+      label(for="stock") Stock:
+      input(type="number", name="stock", id="stock", min="0", value=producto.stock || 0)
+    div
+      label(for="precio_compra") Precio de Compra:
+      input(type="number", name="precio_compra", id="precio_compra", step="0.01", min="0", value=producto.precio_compra || 0)
+    div
+      label(for="precio_venta") Precio de Venta:
+      input(type="number", name="precio_venta", id="precio_venta", step="0.01", min="0", value=producto.precio_venta || 0)
+    div
+      label(for="stock_minimo") Stock Mínimo:
+      input(type="number", name="stock_minimo", id="stock_minimo", min="0", value=producto.stock_minimo || 0)
+    div
+      button(type="submit", style="background-color: #90000a; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px;") Actualizar

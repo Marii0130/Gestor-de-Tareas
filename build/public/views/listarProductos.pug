@@ -1,0 +1,33 @@
+extends layout
+
+block contenido
+  h2 Listado de Productos
+
+  a(href="/inventario/crear", style="margin-bottom: 1rem; display: inline-block; background: #007bff; color: white; padding: 0.5rem 1rem; border-radius: 5px;") Nuevo Producto
+
+  if productos.length
+    table(border="1", cellpadding="10", cellspacing="0", style="width: 100%; margin-top: 1rem;")
+      thead
+        tr
+          th Nombre
+          th Categoría
+          th Stock
+          th Precio Compra
+          th Precio Venta
+          th Stock Mínimo
+          th Acciones
+      tbody
+        each producto in productos
+          tr
+            td= producto.nombre
+            td= producto.categoria
+            td= producto.stock
+            td $#{producto.precio_compra}
+            td $#{producto.precio_venta}
+            td= producto.stock_minimo
+            td
+              a(href=`/inventario/modificar/${producto.id}`, style="margin-right: 0.5rem;") Modificar
+              form(action=`/inventario/${producto.id}?_method=DELETE`, method="POST", style="display:inline")
+                button(type="submit", onclick="return confirm('¿Eliminar este producto?')", style="background: red; color: white; border: none; padding: 0.3rem 0.7rem; border-radius: 3px;") Eliminar
+  else
+    p No hay productos registrados.

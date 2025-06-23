@@ -5,6 +5,7 @@ import path from 'path';
 import methodOverride from 'method-override';
 
 import boletaRouter from './routes/boletaRouter';
+import inventarioRouter from './routes/inventarioRouter';
 
 const app = express();
 
@@ -33,5 +34,6 @@ app.get('/', (req: Request, res: Response) => {
 
 // Rutas específicas
 app.use('/boletas', boletaRouter);
+app.use('/inventario', inventarioRouter);
 
 export default app;

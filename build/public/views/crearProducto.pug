@@ -1,0 +1,43 @@
+extends layout
+
+block contenido
+  h2 Crear Producto
+
+  if errors.length
+    ul.errores
+      each error in errors
+        li= error.msg
+
+  form(method="POST", action="/inventario")
+    .form-grupo
+      label(for="nombre") Nombre:
+      input(type="text", name="nombre", id="nombre", value=producto.nombre || '', required)
+
+    .form-grupo
+      label(for="categoria") Categoría:
+      select(name="categoria", id="categoria", required)
+        option(value="" disabled selected) Selecciona una categoría
+        each categoria in categoriasDisponibles
+          option(
+            value=categoria
+            selected=(producto.categoria === categoria) ? true : false
+          )= categoria
+
+    .form-grupo
+      label(for="stock") Stock:
+      input(type="number", name="stock", id="stock", min="0", value=producto.stock || 0, required)
+
+    .form-grupo
+      label(for="precio_compra") Precio de Compra:
+      input(type="number", name="precio_compra", id="precio_compra", step="0.01", min="0", value=producto.precio_compra || 0, required)
+
+    .form-grupo
+      label(for="precio_venta") Precio de Venta:
+      input(type="number", name="precio_venta", id="precio_venta", step="0.01", min="0", value=producto.precio_venta || 0, required)
+
+    .form-grupo
+      label(for="stock_minimo") Stock Mínimo:
+      input(type="number", name="stock_minimo", id="stock_minimo", min="0", value=producto.stock_minimo || 0, required)
+
+    .form-grupo
+      button(type="submit") Crear Producto
