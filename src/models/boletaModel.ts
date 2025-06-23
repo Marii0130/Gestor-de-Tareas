@@ -51,10 +51,10 @@ export class Boleta {
   observaciones: string;
 
   @Column({ type: 'date' })
-  fecha_ingreso: string;
+  fecha_ingreso: Date;
 
   @Column({ type: 'date', nullable: true })
-  fecha_reparacion: string | null;
+  fecha_reparacion: Date | null;
 
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   senado: number;
