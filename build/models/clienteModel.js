@@ -32,9 +32,9 @@ __decorate([
     __metadata("design:type", String)
 ], Cliente.prototype, "telefono", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => boletaModel_1.Boleta, (boleta) => boleta.cliente),
-    __metadata("design:type", Array)
-], Cliente.prototype, "boletas", void 0);
+    (0, typeorm_1.OneToOne)(() => boletaModel_1.Boleta, boleta => boleta.cliente),
+    __metadata("design:type", boletaModel_1.Boleta)
+], Cliente.prototype, "boleta", void 0);
 exports.Cliente = Cliente = __decorate([
     (0, typeorm_1.Entity)('clientes')
 ], Cliente);

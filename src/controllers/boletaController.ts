@@ -8,82 +8,58 @@ const boletaRepo = AppDataSource.getRepository(Boleta);
 const clienteRepo = AppDataSource.getRepository(Cliente);
 
 const condicionesOpciones = [
-  'con cable',
-  'con control',
-  'pantalla manchada',
-  'faltan tornillos',
-  'sin cable',
-  'sin control',
-  'pantalla rayada',
-  'desarmado'
+  'con cable', 'con control', 'pantalla manchada', 'faltan tornillos',
+  'sin cable', 'sin control', 'pantalla rayada', 'desarmado'
 ];
 
-// Listar todas las boletas
-export const consultarTodos = async (req: Request, res: Response) => {
+export const consultarTodos = async (req: Request, res: Response): Promise<void> => {
   try {
     const boletas = await boletaRepo.find({ relations: ['cliente'] });
-    res.render('listarBoletas', {
-      boletas,
-      pagina: 'Listado de Boletas'
-    });
+    res.render('listarBoletas', { boletas, pagina: 'Listado de Boletas' });
   } catch (error) {
-    res.status(500).send('Error al obtener boletas');
+    res.status(500).render('error', { mensaje: 'Error al obtener boletas' });
   }
 };
 
-// Consultar una boleta específica
 export const consultarUno = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
   try {
-    const boleta = await boletaRepo.findOne({ where: { id }, relations: ['cliente'] });
-    return boleta || null;
+    return await boletaRepo.findOne({ where: { id }, relations: ['cliente'] });
   } catch (error) {
     return null;
   }
 };
 
-// Mostrar formulario para crear boleta
 export const mostrarCrear = async (req: Request, res: Response) => {
   try {
-    const clientes = await clienteRepo.find();
     res.render('crearBoleta', {
       pagina: 'Crear Boleta',
-      clientes,
       condicionesOpciones,
       errors: [],
       boleta: {}
     });
   } catch (error) {
-    res.status(500).send('Error al cargar formulario');
+    res.status(500).render('error', { mensaje: 'Error al cargar formulario' });
   }
 };
 
-// Insertar nueva boleta (y cliente nuevo si es necesario)
 export const insertar = async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    const clientes = await clienteRepo.find();
     return res.status(400).render('crearBoleta', {
       errors: errors.array(),
-      clientes,
       condicionesOpciones,
       boleta: req.body
     });
   }
+
   try {
-    // Crear cliente nuevo si no se recibe clienteId, o buscarlo si existe
-    let cliente;
-    if (req.body.clienteId) {
-      cliente = await clienteRepo.findOneBy({ id: parseInt(req.body.clienteId) });
-      if (!cliente) return res.status(400).send('Cliente inválido');
-    } else {
-      cliente = clienteRepo.create({
-        nombre: req.body.clienteNombre,
-        telefono: req.body.clienteTelefono,
-        domicilio: req.body.clienteDomicilio || ''
-      });
-      await clienteRepo.save(cliente);
-    }
+    const cliente = clienteRepo.create({
+      nombre: req.body.clienteNombre,
+      telefono: req.body.clienteTelefono,
+      domicilio: req.body.clienteDomicilio || ''
+    });
+    await clienteRepo.save(cliente);
 
     const condiciones_iniciales = Array.isArray(req.body.condiciones_iniciales)
       ? req.body.condiciones_iniciales.join(', ')
@@ -107,50 +83,104 @@ export const insertar = async (req: Request, res: Response) => {
     await boletaRepo.save(boleta);
     res.redirect('/boletas/listarBoletas');
   } catch (error) {
-    res.status(500).send('Error al crear boleta');
+    console.error("Error al crear:", error);
+    res.status(500).render('error', { mensaje: 'Error al crear boleta' });
   }
 };
 
-// Modificar boleta existente
+// MODIFICACIÓN ACTUALIZADA
 export const modificar = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).send(errors.array());
-  }
+  const id = parseInt(req.params.id);
+  
   try {
-    const boleta = await boletaRepo.findOneBy({ id });
-    if (!boleta) {
-      return res.status(404).send('Boleta no encontrada');
+    const boleta = await boletaRepo.findOne({ 
+      where: { id },
+      relations: ['cliente']
+    });
+
+    if (!boleta || !boleta.cliente) {
+      return res.status(404).render('error', { mensaje: 'Registro no encontrado' });
     }
-    boletaRepo.merge(boleta, req.body);
-    await boletaRepo.save(boleta);
+
+    // Actualización de campos - ¡Asegúrate de incluir TODOS los campos!
+    boleta.articulo = req.body.articulo;
+    boleta.marca = req.body.marca;
+    boleta.modelo = req.body.modelo;
+    boleta.falla = req.body.falla;
+    boleta.estado = req.body.estado;
+    boleta.condiciones_iniciales = Array.isArray(req.body.condiciones_iniciales) 
+      ? req.body.condiciones_iniciales.join(', ') 
+      : req.body.condiciones_iniciales;
+    boleta.observaciones = req.body.observaciones;
+    boleta.fecha_ingreso = req.body.fecha_ingreso;
+    boleta.fecha_reparacion = req.body.fecha_reparacion || null;
+    boleta.senado = parseFloat(req.body.senado) || 0;
+    boleta.total = parseFloat(req.body.total) || 0;
+
+    // Actualizar datos del cliente también
+    boleta.cliente.nombre = req.body.clienteNombre;
+    boleta.cliente.telefono = req.body.clienteTelefono;
+    boleta.cliente.domicilio = req.body.clienteDomicilio || '';
+
+    // Guardar ambos en una transacción
+    await AppDataSource.transaction(async transactionalEntityManager => {
+      await transactionalEntityManager.save(boleta.cliente);
+      await transactionalEntityManager.save(boleta);
+    });
+
     res.redirect('/boletas/listarBoletas');
   } catch (error) {
-    res.status(500).send('Error al modificar boleta');
+    console.error('Error al modificar:', error);
+    res.status(500).render('error', { 
+      mensaje: 'Error al modificar boleta',
+      detalles: error instanceof Error ? error.message : 'Error desconocido'
+    });
   }
 };
 
-// Eliminar boleta
+// ELIMINACIÓN ACTUALIZADA
 export const eliminar = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
+  
   try {
-    await boletaRepo.delete(id);
+    const boleta = await boletaRepo.findOne({ 
+      where: { id },
+      relations: ['cliente']
+    });
+
+    if (!boleta) {
+      return res.status(404).json({ success: false, message: 'Boleta no encontrada' });
+    }
+
+    // Eliminar ambos registros en transacción
+    await AppDataSource.transaction(async transactionalEntityManager => {
+      // Primero eliminar la boleta
+      await transactionalEntityManager.remove(Boleta, boleta);
+      
+      // Luego eliminar el cliente asociado
+      if (boleta.cliente) {
+        await transactionalEntityManager.remove(Cliente, boleta.cliente);
+      }
+    });
+
     res.redirect('/boletas/listarBoletas');
   } catch (error) {
-    res.status(500).send('Error al eliminar boleta');
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    res.status(500).render('error', {
+      mensaje: 'Error al eliminar registro',
+      detalles: errorMessage
+    });
   }
 };
 
-// Validaciones para insertar/modificar boleta
-export const validar = () => {
-  return [
-    body('clienteNombre').notEmpty().withMessage('El nombre del cliente es obligatorio'),
-    body('clienteTelefono').notEmpty().withMessage('El teléfono del cliente es obligatorio'),
-    body('articulo').notEmpty().withMessage('El artículo es obligatorio'),
-    body('marca').notEmpty().withMessage('La marca es obligatoria'),
-    body('modelo').notEmpty().withMessage('El modelo es obligatorio'),
-    body('falla').notEmpty().withMessage('La falla es obligatoria'),
-    body('fecha_ingreso').notEmpty().withMessage('La fecha de ingreso es obligatoria').isDate().withMessage('Debe ser una fecha válida'),
-  ];
-};
+export const validar = () => [
+  body('clienteNombre').notEmpty().withMessage('El nombre del cliente es obligatorio'),
+  body('clienteTelefono').notEmpty().withMessage('El teléfono del cliente es obligatorio'),
+  body('articulo').notEmpty().withMessage('El artículo es obligatorio'),
+  body('marca').notEmpty().withMessage('La marca es obligatoria'),
+  body('modelo').notEmpty().withMessage('El modelo es obligatorio'),
+  body('falla').notEmpty().withMessage('La falla es obligatoria'),
+  body('fecha_ingreso').notEmpty().withMessage('La fecha de ingreso es obligatoria').isDate(),
+  body('senado').optional().isFloat({ min: 0 }),
+  body('total').optional().isFloat({ min: 0 })
+];

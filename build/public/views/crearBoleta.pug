@@ -20,6 +20,7 @@ block contenido
       max-width: 500px;
       padding: 0.4rem;
       font-size: 1rem;
+      box-sizing: border-box;
     }
 
   form(action="/boletas" method="POST")
@@ -76,7 +77,33 @@ block contenido
         input(type="number" step="0.01" min="0" name="senado" id="senado" value=boleta.senado || 0)
       div
         label(for="total") Total:
-        input(type="number" step="0.01" min="0" name="total" id="total" value=boleta.total || 0)
+        input(type="number" step="0.01" min="0" name="total" id="total" value=boleta.total || '')
 
     div
       button(type="submit" style="background-color: #90000a; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px;") Crear
+
+  script.
+    document.addEventListener('DOMContentLoaded', () => {
+      const fechaIngresoInput = document.getElementById('fecha_ingreso');
+      const fechaReparacionInput = document.getElementById('fecha_reparacion');
+
+      fechaIngresoInput.addEventListener('change', () => {
+        const partes = fechaIngresoInput.value.split('-');
+        if (partes.length !== 3) return;
+
+        const fechaIngreso = new Date(partes[0], partes[1] - 1, partes[2]);
+        if (isNaN(fechaIngreso.getTime())) return;
+
+        let siguiente = new Date(fechaIngreso);
+        siguiente.setDate(siguiente.getDate() + 1);
+
+        while (siguiente.getDay() === 0 || siguiente.getDay() === 6) {
+          siguiente.setDate(siguiente.getDate() + 1);
+        }
+
+        const yyyy = siguiente.getFullYear();
+        const mm = ('0' + (siguiente.getMonth() + 1)).slice(-2);
+        const dd = ('0' + siguiente.getDate()).slice(-2);
+        fechaReparacionInput.value = `${yyyy}-${mm}-${dd}`;
+      });
+    });

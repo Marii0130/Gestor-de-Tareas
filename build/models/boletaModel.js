@@ -20,7 +20,11 @@ __decorate([
     __metadata("design:type", Number)
 ], Boleta.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => clienteModel_1.Cliente, (cliente) => cliente.boletas, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.OneToOne)(() => clienteModel_1.Cliente, cliente => cliente.boleta, {
+        cascade: true,
+        onDelete: 'CASCADE',
+        eager: true
+    }),
     (0, typeorm_1.JoinColumn)({ name: 'cliente_id' }),
     __metadata("design:type", clienteModel_1.Cliente)
 ], Boleta.prototype, "cliente", void 0);

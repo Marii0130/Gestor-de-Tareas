@@ -8,7 +8,6 @@ const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
 const path_1 = __importDefault(require("path"));
 const method_override_1 = __importDefault(require("method-override"));
-const clienteRouter_1 = __importDefault(require("./routes/clienteRouter"));
 const boletaRouter_1 = __importDefault(require("./routes/boletaRouter"));
 const app = (0, express_1.default)();
 // Configurar motor de vistas (Pug)
@@ -30,6 +29,5 @@ app.get('/', (req, res) => {
     });
 });
 // Rutas específicas
-app.use('/clientes', clienteRouter_1.default);
 app.use('/boletas', boletaRouter_1.default);
 exports.default = app;

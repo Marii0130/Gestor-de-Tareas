@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "typeorm";
 import { Cliente } from "./clienteModel";
 
 @Entity('boletas')
@@ -6,7 +6,11 @@ export class Boleta {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Cliente, (cliente) => cliente.boletas, { onDelete: 'CASCADE' })
+  @OneToOne(() => Cliente, cliente => cliente.boleta, {
+    cascade: true,
+    onDelete: 'CASCADE',
+    eager: true
+  })
   @JoinColumn({ name: 'cliente_id' })
   cliente: Cliente;
 

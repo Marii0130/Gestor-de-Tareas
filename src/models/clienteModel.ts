@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from "typeorm";
 import { Boleta } from "./boletaModel";
 
 @Entity('clientes')
@@ -15,6 +15,6 @@ export class Cliente {
   @Column({ length: 30 })
   telefono: string;
 
-  @OneToMany(() => Boleta, (boleta) => boleta.cliente)
-  boletas: Boleta[];
+  @OneToOne(() => Boleta, boleta => boleta.cliente)
+  boleta: Boleta;
 }

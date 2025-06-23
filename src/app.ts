@@ -4,7 +4,6 @@ import morgan from 'morgan';
 import path from 'path';
 import methodOverride from 'method-override';
 
-import clienteRouter from './routes/clienteRouter';
 import boletaRouter from './routes/boletaRouter';
 
 const app = express();
@@ -33,7 +32,6 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Rutas específicas
-app.use('/clientes', clienteRouter);
 app.use('/boletas', boletaRouter);
 
 export default app;

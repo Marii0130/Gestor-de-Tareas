@@ -2,11 +2,92 @@ extends layout
 
 block contenido
   h2 Lista de Boletas
-  a(href="/boletas/crearBoleta", style="background-color: #90000a; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 5px; float: right;") Crear Boleta
-  table(border="1" cellpadding="10" cellspacing="0" style="width: 100%; margin-top: 2rem; background-color: white;")
+
+  style.
+    table {
+      width: 100%;
+      background-color: #f2f2f2;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.7rem;
+      border: 1px solid #ccc;
+      color: #000;
+    }
+    thead {
+      background-color: #dcdcdc;
+      user-select: none;
+    }
+    tbody tr:hover {
+      background-color: #d6d6d6;
+      cursor: pointer;
+    }
+    .estado-recibido {
+      background-color: #eeeeee;
+    }
+    .estado-en_diagnostico {
+      background-color: #fff7cc;
+    }
+    .estado-presupuesto_enviado {
+      background-color: #ffe0b3;
+    }
+    .estado-aprobado {
+      background-color: #d6f5d6;
+    }
+    .estado-reparando {
+      background-color: #fff9cc;
+    }
+    .estado-esperando_repuestos {
+      background-color: #f3e6ff;
+    }
+    .estado-reparado {
+      background-color: #ccffcc;
+    }
+    .estado-entregado {
+      background-color: #8fff8f;
+    }
+    .estado-cancelado,
+    .estado-no_reparado {
+      background-color: #ffcccc;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    .modal-content {
+      background: white;
+      margin: 5% auto;
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 600px;
+      position: relative;
+    }
+
+  script.
+    function abrirModal(boletaId) {
+      const modal = document.getElementById('modal-' + boletaId);
+      if (modal) modal.style.display = 'block';
+    }
+
+    function cerrarModal(boletaId) {
+      const modal = document.getElementById('modal-' + boletaId);
+      if (modal) modal.style.display = 'none';
+    }
+
+  a(
+    href="/boletas/crearBoleta",
+    style="background-color: #90000a; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 5px; float: right;"
+  ) Crear Boleta
+
+  table
     thead
       tr
-        //- th ID  <-- eliminado
         th Cliente
         th Artículo
         th Marca
@@ -15,11 +96,66 @@ block contenido
         th Estado
     tbody
       each boleta in boletas
-        tr
-          //- td= boleta.id  <-- eliminado
+        tr(
+          class='estado-' + boleta.estado
+          onclick='abrirModal(' + boleta.id + ')'
+        )
           td= boleta.cliente.nombre
           td= boleta.articulo
           td= boleta.marca
           td= boleta.modelo
           td= boleta.falla
           td= boleta.estado
+
+  //- MODALES
+  each boleta in boletas
+    .modal(id='modal-' + boleta.id)
+      .modal-content
+        h3 Detalles de la Boleta 
+        ul
+          li
+            strong Cliente:
+            |  #{boleta.cliente.nombre}
+          li
+            strong Artículo:
+            |  #{boleta.articulo}
+          li
+            strong Marca:
+            |  #{boleta.marca}
+          li
+            strong Modelo:
+            |  #{boleta.modelo}
+          li
+            strong Falla:
+            |  #{boleta.falla}
+          li
+            strong Estado:
+            |  #{boleta.estado}
+          li
+            strong Condiciones:
+            |  #{boleta.condiciones_iniciales}
+          li
+            strong Observaciones:
+            |  #{boleta.observaciones}
+          li
+            strong Fecha Ingreso:
+            |  #{boleta.fecha_ingreso}
+          li
+            strong Fecha Reparación:
+            |  #{boleta.fecha_reparacion || '---'}
+          li
+            strong Señado:
+            |  $#{boleta.senado}
+          li
+            strong Total:
+            |  $#{boleta.total}
+
+        div(style="margin-top: 2rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;")
+          a(href="/boletas/modificarBoleta/" + boleta.id, style="background-color: #004080; color: white; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none;") Modificar
+          form(method="POST", action="/boletas/" + boleta.id + "?_method=DELETE", onsubmit="return confirm('¿Estás seguro de eliminar esta boleta?');")
+            button(type="submit", style="background-color: #90000a; color: white; padding: 0.5rem 1rem; border-radius: 5px; border: none;") Eliminar
+          button(
+  type="button",
+  onclick=`cerrarModal(${boleta.id})`,
+  style="background-color: #888; color: white; padding: 0.5rem 1rem; border-radius: 5px; border: none;"
+) Cerrar
