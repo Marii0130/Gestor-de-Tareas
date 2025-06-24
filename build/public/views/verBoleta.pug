@@ -1,0 +1,52 @@
+extends layout
+
+block contenido
+  h2 Boleta ID #{boleta.id}
+
+  style.
+    .detalle {
+      max-width: 600px;
+      margin: 0 auto;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+
+    .detalle p {
+      margin: 0.5rem 0;
+      font-size: 1rem;
+    }
+
+    .btn {
+      background-color: #007bff;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: inline-block;
+      text-decoration: none;
+      margin-top: 1rem;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
+  div.detalle
+    p Cliente: #{boleta.cliente.nombre}
+    p Artículo: #{boleta.articulo}
+    p Marca: #{boleta.marca}
+    p Modelo: #{boleta.modelo}
+    p Falla: #{boleta.falla}
+    p Estado: #{boleta.estado}
+    p Total: $#{boleta.total}
+    if boleta.senado
+      p Señado: $#{boleta.senado}
+    if boleta.fechaSenado
+      p Fecha de Señado: #{new Date(boleta.fechaSenado).toLocaleString()}
+    if boleta.fechaEntrega
+      p Fecha de Entrega: #{new Date(boleta.fechaEntrega).toLocaleString()}
+
+    a.btn(href="/reparaciones/historial") Volver al Historial

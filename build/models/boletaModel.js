@@ -57,7 +57,8 @@ __decorate([
             'reparado',
             'entregado',
             'cancelado',
-            'no_reparado'
+            'no_reparado',
+            'entregado_no_reparado'
         ],
         default: 'recibido'
     }),
@@ -84,9 +85,21 @@ __decorate([
     __metadata("design:type", Number)
 ], Boleta.prototype, "senado", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', default: 0 }),
+    __metadata("design:type", Number)
+], Boleta.prototype, "costo", void 0);
+__decorate([
     (0, typeorm_1.Column)('decimal', { precision: 10, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], Boleta.prototype, "total", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Date)
+], Boleta.prototype, "fechaEntrega", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Date)
+], Boleta.prototype, "fechaSenado", void 0);
 exports.Boleta = Boleta = __decorate([
     (0, typeorm_1.Entity)('boletas')
 ], Boleta);

@@ -9,6 +9,7 @@ import { Producto } from './models/productoModel';
 import boletaRouter from './routes/boletaRouter';
 import inventarioRouter from './routes/inventarioRouter';
 import ventasRouter from './routes/ventasRouter';
+import reparacionesRouter from './routes/reparacionesRouter'
 
 const app = express();
 
@@ -48,5 +49,6 @@ app.get('/', async (req: Request, res: Response) => {
 app.use('/boletas', boletaRouter);
 app.use('/inventario', inventarioRouter);
 app.use('/ventas', ventasRouter);
+app.use('/reparaciones', reparacionesRouter)
 
 export default app;

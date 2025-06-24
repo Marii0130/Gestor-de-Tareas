@@ -1,0 +1,88 @@
+extends layout
+
+block contenido
+  h2 Confirmar Entrega
+
+  style.
+    .form-container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+
+    .form-container label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .form-container input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .form-container .total-pagar {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-top: 12px;
+    }
+
+    .form-container .btn {
+      background-color: #28a745;
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .form-container .btn:hover {
+      background-color: #218838;
+    }
+
+    .form-container .cancel-btn {
+      background-color: #dc3545;
+    }
+
+    .form-container .cancel-btn:hover {
+      background-color: #c82333;
+    }
+
+  .form-container
+    p Cliente: #{boleta.cliente.nombre}
+    p Artículo: #{boleta.articulo}
+    p Estado actual: #{boleta.estado}
+    p Señado: $#{boleta.senado || 0}
+
+    form(action=`/reparaciones/entregar/${boleta.id}` method="post")
+      label(for="total") Total:
+      input#total-input(type="number" name="total" step="0.01" min="0" required value=boleta.total)
+
+      p.total-pagar Total a pagar: $<span id="total-pagar-val">#{totalAPagar}</span>
+
+      button.btn(type="submit") Confirmar Entrega
+      a.btn.cancel-btn(href="/reparaciones") Cancelar
+
+  script.
+    const totalInput = document.getElementById('total-input');
+    const totalPagarSpan = document.getElementById('total-pagar-val');
+    const senado = #{boleta.senado || 0};
+
+    function actualizarTotalPagar() {
+      const total = parseFloat(totalInput.value);
+      if (!isNaN(total)) {
+        const totalPagar = total - senado;
+        totalPagarSpan.textContent = totalPagar.toFixed(2);
+      } else {
+        totalPagarSpan.textContent = '0.00';
+      }
+    }
+
+    totalInput.addEventListener('input', actualizarTotalPagar);

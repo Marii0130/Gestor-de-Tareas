@@ -1,0 +1,14 @@
+extends layout
+
+block contenido
+  h2 Entrega Exitosa
+
+  p Cliente: #{boleta.cliente.nombre}
+  p Artículo: #{boleta.articulo}
+  p Estado: #{boleta.estado}
+  p Total: $#{boleta.total}
+  p Señado: $#{boleta.senado || 0}
+  p Total pagado: $#{totalPagado}
+  p Fecha de entrega: #{fechaEntrega}
+
+  a(href='/reparaciones') Volver a Reparaciones

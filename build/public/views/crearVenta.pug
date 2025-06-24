@@ -1,61 +1,125 @@
 extends layout
 
 block contenido
-  h2(style="text-align: center; margin-bottom: 1rem;") Crear Venta
+  h1 Nueva Venta
 
-  form(method="POST", action="/ventas", onsubmit="return prepararEnvioVenta()")
-    table(style="width: 90%; margin: 0 auto 1rem auto; border-collapse: collapse;")
+  style.
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    thead {
+      background-color: #f5f5f5;
+    }
+    tbody tr:hover {
+      background-color: #e9f2ff;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    input[type=number] {
+      width: 70px;
+      padding: 4px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    #total {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+  form(action="/ventas/crear" method="post" id="formVenta")
+    table
       thead
-        tr(style="background-color: #f0f0f0; text-align: center;")
+        tr
           th Producto
-          th Cantidad
           th Precio Unitario
+          th Cantidad
           th Subtotal
-      tbody
-        each producto, index in productos
-          - const precio = Number(producto.precio_venta) || 0
-          tr(style="text-align: center;")
-            td= producto.nombre
+      tbody#productosTabla
+        each producto, i in productos
+          tr
+            td #{producto.nombre}
+            td $#{(Number(producto.precio_venta) || 0).toFixed(2)}
             td
               input(
                 type="number",
-                name=`productos[${index}][cantidad]`,
+                name=`productos[${i}][cantidad]`,
                 min="0",
                 value="0",
+                step="1",
                 class="cantidad-input",
-                data-precio=precio,
-                oninput="actualizarSubtotal(this)"
+                data-precio=(Number(producto.precio_venta) || 0),
+                data-id=producto.id,
+                data-stock=producto.stock
               )
-              input(type="hidden", name=`productos[${index}][id]`, value=producto.id)
-            td $#{precio.toFixed(2)}
-            td(class="subtotal") $0.00
+              input(type="hidden", name=`productos[${i}][id]`, value=producto.id)
+            td.subtotal $0.00
 
-    div(style="width: 90%; margin: 0 auto; text-align: right; font-weight: bold; font-size: 1.2rem;")
-      | Total:
-      span#total $#{Number(venta.total).toFixed(2)}
+    div(style="width: 90%; margin: 1rem auto 0 auto; text-align: right; font-weight: bold; font-size: 1.2rem;")
+      | Total: 
+      span#total $0.00
 
     div(style="width: 90%; margin: 1rem auto 0 auto; text-align: center;")
-      button(type="submit", style="background: #007bff; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px;") Confirmar Venta
-      a(href="/ventas/listar", style="margin-left: 1rem; text-decoration: none; color: #555;") Cancelar
+      button(type="submit") Confirmar Venta
 
   script.
-    function actualizarSubtotal(input) {
-      const fila = input.closest('tr');
-      const precio = parseFloat(input.dataset.precio) || 0;
-      const cantidad = parseInt(input.value) || 0;
-      const subtotal = (precio * cantidad).toFixed(2);
-      fila.querySelector('.subtotal').textContent = `$${subtotal}`;
-      actualizarTotal();
+    const form = document.getElementById('formVenta');
+    const totalSpan = document.getElementById('total');
+    const cantidadInputs = document.querySelectorAll('.cantidad-input');
+
+    function actualizarTotales() {
+      let total = 0;
+      cantidadInputs.forEach(input => {
+        const precio = parseFloat(input.dataset.precio) || 0;
+        const cantidad = parseInt(input.value) || 0;
+        const stock = parseInt(input.dataset.stock) || 0;
+
+        if (cantidad > stock) {
+          input.value = stock;
+          alert(`La cantidad ingresada para "${input.dataset.id}" supera el stock disponible (${stock})`);
+        }
+
+        const subtotal = precio * cantidad;
+        const subtotalTd = input.parentElement.nextElementSibling;
+        subtotalTd.textContent = '$' + subtotal.toFixed(2);
+        total += subtotal;
+      });
+      totalSpan.textContent = '$' + total.toFixed(2);
     }
 
-    function actualizarTotal() {
-      const subtotales = Array.from(document.querySelectorAll('.subtotal')).map(td =>
-        parseFloat(td.textContent.replace('$', '')) || 0
-      );
-      const total = subtotales.reduce((acc, val) => acc + val, 0).toFixed(2);
-      document.getElementById('total').textContent = `$${total}`;
-    }
+    cantidadInputs.forEach(input => {
+      input.addEventListener('input', actualizarTotales);
+    });
 
-    function prepararEnvioVenta() {
-      return true; // puede validarse antes de enviar si es necesario
-    }
+    actualizarTotales();
+
+    form.addEventListener('submit', (e) => {
+      const filas = document.querySelectorAll('#productosTabla tr');
+      filas.forEach(fila => {
+        const inputCantidad = fila.querySelector('input.cantidad-input');
+        const cantidad = parseInt(inputCantidad.value);
+        const stock = parseInt(inputCantidad.dataset.stock);
+        if (!cantidad || cantidad <= 0 || cantidad > stock) {
+          inputCantidad.disabled = true;
+          const hiddenInput = fila.querySelector('input[type="hidden"]');
+          if (hiddenInput) hiddenInput.disabled = true;
+        }
+      });
+    });

@@ -1,31 +1,80 @@
 extends layout
 
 block contenido
-  h2 Modificar Producto
+  h2(style="text-align: center; margin-top: 20px;") Modificar Producto
+
+  style.
+    .form-container {
+      max-width: 500px;
+      margin: 2rem auto;
+      background-color: #fdfdfd;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .form-container label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: bold;
+    }
+
+    .form-container input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1.2rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .boton-actualizar {
+      background-color: #90000a;
+      color: white;
+      padding: 0.6rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      width: 100%;
+    }
+
+    .boton-actualizar:hover {
+      background-color: #700008;
+    }
+
+    ul.errores {
+      color: red;
+      margin-bottom: 1rem;
+      list-style: disc;
+      padding-left: 1.5rem;
+    }
 
   if errors.length
-    ul(style="color: red")
-      each error in errors
-        li= error.msg
+    .form-container
+      ul.errores
+        each error in errors
+          li= error.msg
 
-  form(action=`/inventario/${producto.id}?_method=PUT`, method="POST")
-    div
+  .form-container
+    form(action=`/inventario/${producto.id}?_method=PUT`, method="POST")
       label(for="nombre") Nombre:
-      input(type="text", name="nombre", id="nombre", value=producto.nombre || '')
-    div
+      input(type="text", name="nombre", id="nombre", value=producto.nombre || '', required)
+
       label(for="categoria") Categoría:
-      input(type="text", name="categoria", id="categoria", value=producto.categoria || '')
-    div
+      input(type="text", name="categoria", id="categoria", value=producto.categoria || '', required)
+
       label(for="stock") Stock:
-      input(type="number", name="stock", id="stock", min="0", value=producto.stock || 0)
-    div
+      input(type="number", name="stock", id="stock", min="0", value=producto.stock || 0, required)
+
       label(for="precio_compra") Precio de Compra:
-      input(type="number", name="precio_compra", id="precio_compra", step="0.01", min="0", value=producto.precio_compra || 0)
-    div
+      input(type="number", name="precio_compra", id="precio_compra", step="0.01", min="0", value=producto.precio_compra || 0, required)
+
       label(for="precio_venta") Precio de Venta:
-      input(type="number", name="precio_venta", id="precio_venta", step="0.01", min="0", value=producto.precio_venta || 0)
-    div
+      input(type="number", name="precio_venta", id="precio_venta", step="0.01", min="0", value=producto.precio_venta || 0, required)
+
       label(for="stock_minimo") Stock Mínimo:
-      input(type="number", name="stock_minimo", id="stock_minimo", min="0", value=producto.stock_minimo || 0)
-    div
-      button(type="submit", style="background-color: #90000a; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px;") Actualizar
+      input(type="number", name="stock_minimo", id="stock_minimo", min="0", value=producto.stock_minimo || 0, required)
+
+      button(type="submit", class="boton-actualizar") Actualizar Producto

@@ -11,14 +11,19 @@ const productoRepo = AppDataSource.getRepository(Producto);
 export const mostrarFormularioVenta = async (req: Request, res: Response) => {
   try {
     const productos = await productoRepo.find();
+    const venta = {
+      total: 0,
+    }
     res.render('crearVenta', {
       productos,
+      venta,
       pagina: 'Nueva Venta'
     });
   } catch (error) {
     res.status(500).send('Error al cargar el formulario de venta');
   }
 };
+
 
 export const registrarVenta = async (req: Request, res: Response): Promise<void> => {
   try {

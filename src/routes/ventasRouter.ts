@@ -8,7 +8,7 @@ import {
 const router = Router();
 
 router.get('/crear', mostrarFormularioVenta);
-router.post('/', registrarVenta);
+router.post('/crear', registrarVenta);
 router.get('/listar', listarVentas);
 
 export default router;

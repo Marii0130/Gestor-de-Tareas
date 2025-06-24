@@ -20,8 +20,12 @@ const productoRepo = conexion_1.AppDataSource.getRepository(productoModel_1.Prod
 const mostrarFormularioVenta = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const productos = yield productoRepo.find();
+        const venta = {
+            total: 0,
+        };
         res.render('crearVenta', {
             productos,
+            venta,
             pagina: 'Nueva Venta'
         });
     }

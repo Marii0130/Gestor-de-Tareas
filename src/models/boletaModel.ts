@@ -38,7 +38,8 @@ export class Boleta {
       'reparado',
       'entregado',
       'cancelado',
-      'no_reparado'
+      'no_reparado',
+      'entregado_no_reparado'
     ],
     default: 'recibido'
   })
@@ -59,6 +60,15 @@ export class Boleta {
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   senado: number;
 
+  @Column({ type: 'decimal', default: 0 })
+  costo: number
+
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   total: number;
+
+  @Column({ type: 'datetime', nullable: true })
+  fechaEntrega: Date
+
+  @Column({ type: 'datetime', nullable: true })
+  fechaSenado: Date
 }
