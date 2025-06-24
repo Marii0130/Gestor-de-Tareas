@@ -34,7 +34,8 @@ block contenido
     .estado-reparado { background-color: #ccffcc; }
     .estado-entregado { background-color: #8fff8f; }
     .estado-cancelado,
-    .estado-no_reparado { background-color: #ffcccc; }
+    .estado-no_reparado,
+    .estado-entregado_no_reparado { background-color: #ffcccc; }
 
     .modal {
       display: none;
@@ -152,10 +153,13 @@ block contenido
             |  #{boleta.fecha_reparacion || '---'}
           li
             strong Señado:
-            |  $#{boleta.senado}
+            |  $#{Number(boleta.senado).toFixed(2)}
+          li
+            strong Costo:
+            |  $#{Number(boleta.costo).toFixed(2)}
           li
             strong Total:
-            |  $#{boleta.total}
+            |  $#{Number(boleta.total).toFixed(2)}
 
         div(style="margin-top: 2rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;")
           a(href="/boletas/modificarBoleta/" + boleta.id, class="boton modificar") Modificar

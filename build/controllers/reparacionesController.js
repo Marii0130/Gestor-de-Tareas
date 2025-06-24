@@ -164,6 +164,7 @@ const mostrarHistorial = (req, res) => __awaiter(void 0, void 0, void 0, functio
                     totalPagado: Number(b.senado),
                     tipoReparacion: ['reparado', 'entregado'].includes(b.estado) ? 'Reparado' : 'No Reparado',
                     senado: Number(b.senado),
+                    costo: Number(b.costo || 0),
                     boleta: b
                 });
             }
@@ -176,10 +177,12 @@ const mostrarHistorial = (req, res) => __awaiter(void 0, void 0, void 0, functio
                     totalPagado: totalPagadoEntrega,
                     tipoReparacion: b.estado === 'entregado' ? 'Reparado' : 'No Reparado',
                     senado: Number(b.senado || 0),
+                    costo: Number(b.costo || 0),
                     boleta: b
                 });
             }
         });
+        // Ordenar de más reciente a más viejo
         historial.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
         res.render('historialReparaciones', { historial, pagina: 'Historial de Movimientos' });
     }

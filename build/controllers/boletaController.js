@@ -83,8 +83,9 @@ const insertar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             observaciones: req.body.observaciones || '',
             fecha_ingreso: req.body.fecha_ingreso,
             fecha_reparacion: req.body.fecha_reparacion || null,
-            senado: req.body.senado || 0,
-            total: req.body.total || 0,
+            senado: parseFloat(req.body.senado) || 0,
+            costo: parseFloat(req.body.costo) || 0, // <-- COSTO agregado
+            total: parseFloat(req.body.total) || 0,
             cliente
         });
         yield boletaRepo.save(boleta);
@@ -96,7 +97,6 @@ const insertar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.insertar = insertar;
-// MODIFICACIÓN ACTUALIZADA
 const modificar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = parseInt(req.params.id);
     try {
@@ -107,7 +107,6 @@ const modificar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!boleta || !boleta.cliente) {
             return res.status(404).render('error', { mensaje: 'Registro no encontrado' });
         }
-        // Actualización de campos - ¡Asegúrate de incluir TODOS los campos!
         boleta.articulo = req.body.articulo;
         boleta.marca = req.body.marca;
         boleta.modelo = req.body.modelo;
@@ -120,12 +119,11 @@ const modificar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         boleta.fecha_ingreso = req.body.fecha_ingreso;
         boleta.fecha_reparacion = req.body.fecha_reparacion || null;
         boleta.senado = parseFloat(req.body.senado) || 0;
+        boleta.costo = parseFloat(req.body.costo) || 0; // <-- COSTO agregado
         boleta.total = parseFloat(req.body.total) || 0;
-        // Actualizar datos del cliente también
         boleta.cliente.nombre = req.body.clienteNombre;
         boleta.cliente.telefono = req.body.clienteTelefono;
         boleta.cliente.domicilio = req.body.clienteDomicilio || '';
-        // Guardar ambos en una transacción
         yield conexion_1.AppDataSource.transaction((transactionalEntityManager) => __awaiter(void 0, void 0, void 0, function* () {
             yield transactionalEntityManager.save(boleta.cliente);
             yield transactionalEntityManager.save(boleta);
@@ -141,7 +139,6 @@ const modificar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.modificar = modificar;
-// ELIMINACIÓN ACTUALIZADA
 const eliminar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = parseInt(req.params.id, 10);
     try {
@@ -152,11 +149,8 @@ const eliminar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!boleta) {
             return res.status(404).json({ success: false, message: 'Boleta no encontrada' });
         }
-        // Eliminar ambos registros en transacción
         yield conexion_1.AppDataSource.transaction((transactionalEntityManager) => __awaiter(void 0, void 0, void 0, function* () {
-            // Primero eliminar la boleta
             yield transactionalEntityManager.remove(boletaModel_1.Boleta, boleta);
-            // Luego eliminar el cliente asociado
             if (boleta.cliente) {
                 yield transactionalEntityManager.remove(clienteModel_1.Cliente, boleta.cliente);
             }
@@ -181,6 +175,7 @@ const validar = () => [
     (0, express_validator_1.body)('falla').notEmpty().withMessage('La falla es obligatoria'),
     (0, express_validator_1.body)('fecha_ingreso').notEmpty().withMessage('La fecha de ingreso es obligatoria').isDate(),
     (0, express_validator_1.body)('senado').optional().isFloat({ min: 0 }),
+    (0, express_validator_1.body)('costo').optional().isFloat({ min: 0 }).withMessage('El costo debe ser un número positivo'), // <-- COSTO validación
     (0, express_validator_1.body)('total').optional().isFloat({ min: 0 })
 ];
 exports.validar = validar;

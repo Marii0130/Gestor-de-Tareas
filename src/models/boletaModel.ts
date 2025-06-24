@@ -60,8 +60,8 @@ export class Boleta {
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   senado: number;
 
-  @Column({ type: 'decimal', default: 0 })
-  costo: number
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  costo: number;
 
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   total: number;

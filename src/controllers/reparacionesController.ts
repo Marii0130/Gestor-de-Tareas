@@ -169,6 +169,7 @@ export const mostrarHistorial = async (req: Request, res: Response) => {
       totalPagado: number
       tipoReparacion: string
       senado: number
+      costo: number
       boleta: Boleta
     }
 
@@ -183,9 +184,11 @@ export const mostrarHistorial = async (req: Request, res: Response) => {
           totalPagado: Number(b.senado),
           tipoReparacion: ['reparado', 'entregado'].includes(b.estado) ? 'Reparado' : 'No Reparado',
           senado: Number(b.senado),
+          costo: Number(b.costo || 0),
           boleta: b
         })
       }
+
       if (['entregado', 'entregado_no_reparado'].includes(b.estado)) {
         const totalPagadoEntrega = Number(b.total) - Number(b.senado || 0)
         historial.push({
@@ -195,11 +198,13 @@ export const mostrarHistorial = async (req: Request, res: Response) => {
           totalPagado: totalPagadoEntrega,
           tipoReparacion: b.estado === 'entregado' ? 'Reparado' : 'No Reparado',
           senado: Number(b.senado || 0),
+          costo: Number(b.costo || 0),
           boleta: b
         })
       }
     })
 
+    // Ordenar de más reciente a más viejo
     historial.sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
 
     res.render('historialReparaciones', { historial, pagina: 'Historial de Movimientos' })

@@ -75,8 +75,9 @@ export const insertar = async (req: Request, res: Response) => {
       observaciones: req.body.observaciones || '',
       fecha_ingreso: req.body.fecha_ingreso,
       fecha_reparacion: req.body.fecha_reparacion || null,
-      senado: req.body.senado || 0,
-      total: req.body.total || 0,
+      senado: parseFloat(req.body.senado) || 0,
+      costo: parseFloat(req.body.costo) || 0,    // <-- COSTO agregado
+      total: parseFloat(req.body.total) || 0,
       cliente
     });
 
@@ -88,12 +89,11 @@ export const insertar = async (req: Request, res: Response) => {
   }
 };
 
-// MODIFICACIÓN ACTUALIZADA
 export const modificar = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
-  
+
   try {
-    const boleta = await boletaRepo.findOne({ 
+    const boleta = await boletaRepo.findOne({
       where: { id },
       relations: ['cliente']
     });
@@ -102,27 +102,25 @@ export const modificar = async (req: Request, res: Response) => {
       return res.status(404).render('error', { mensaje: 'Registro no encontrado' });
     }
 
-    // Actualización de campos - ¡Asegúrate de incluir TODOS los campos!
     boleta.articulo = req.body.articulo;
     boleta.marca = req.body.marca;
     boleta.modelo = req.body.modelo;
     boleta.falla = req.body.falla;
     boleta.estado = req.body.estado;
-    boleta.condiciones_iniciales = Array.isArray(req.body.condiciones_iniciales) 
-      ? req.body.condiciones_iniciales.join(', ') 
+    boleta.condiciones_iniciales = Array.isArray(req.body.condiciones_iniciales)
+      ? req.body.condiciones_iniciales.join(', ')
       : req.body.condiciones_iniciales;
     boleta.observaciones = req.body.observaciones;
     boleta.fecha_ingreso = req.body.fecha_ingreso;
     boleta.fecha_reparacion = req.body.fecha_reparacion || null;
     boleta.senado = parseFloat(req.body.senado) || 0;
+    boleta.costo = parseFloat(req.body.costo) || 0;  // <-- COSTO agregado
     boleta.total = parseFloat(req.body.total) || 0;
 
-    // Actualizar datos del cliente también
     boleta.cliente.nombre = req.body.clienteNombre;
     boleta.cliente.telefono = req.body.clienteTelefono;
     boleta.cliente.domicilio = req.body.clienteDomicilio || '';
 
-    // Guardar ambos en una transacción
     await AppDataSource.transaction(async transactionalEntityManager => {
       await transactionalEntityManager.save(boleta.cliente);
       await transactionalEntityManager.save(boleta);
@@ -131,19 +129,18 @@ export const modificar = async (req: Request, res: Response) => {
     res.redirect('/boletas/listarBoletas');
   } catch (error) {
     console.error('Error al modificar:', error);
-    res.status(500).render('error', { 
+    res.status(500).render('error', {
       mensaje: 'Error al modificar boleta',
       detalles: error instanceof Error ? error.message : 'Error desconocido'
     });
   }
 };
 
-// ELIMINACIÓN ACTUALIZADA
 export const eliminar = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
-  
+
   try {
-    const boleta = await boletaRepo.findOne({ 
+    const boleta = await boletaRepo.findOne({
       where: { id },
       relations: ['cliente']
     });
@@ -152,12 +149,9 @@ export const eliminar = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Boleta no encontrada' });
     }
 
-    // Eliminar ambos registros en transacción
     await AppDataSource.transaction(async transactionalEntityManager => {
-      // Primero eliminar la boleta
       await transactionalEntityManager.remove(Boleta, boleta);
-      
-      // Luego eliminar el cliente asociado
+
       if (boleta.cliente) {
         await transactionalEntityManager.remove(Cliente, boleta.cliente);
       }
@@ -182,5 +176,6 @@ export const validar = () => [
   body('falla').notEmpty().withMessage('La falla es obligatoria'),
   body('fecha_ingreso').notEmpty().withMessage('La fecha de ingreso es obligatoria').isDate(),
   body('senado').optional().isFloat({ min: 0 }),
+  body('costo').optional().isFloat({ min: 0 }).withMessage('El costo debe ser un número positivo'), // <-- COSTO validación
   body('total').optional().isFloat({ min: 0 })
 ];

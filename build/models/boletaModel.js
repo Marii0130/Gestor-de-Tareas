@@ -85,7 +85,7 @@ __decorate([
     __metadata("design:type", Number)
 ], Boleta.prototype, "senado", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', default: 0 }),
+    (0, typeorm_1.Column)('decimal', { precision: 10, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], Boleta.prototype, "costo", void 0);
 __decorate([
