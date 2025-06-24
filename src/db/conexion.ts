@@ -5,6 +5,8 @@ import * as dotenv from 'dotenv';
 import { Cliente } from '../models/clienteModel';
 import { Boleta } from '../models/boletaModel';
 import { Producto } from '../models/productoModel';
+import { Venta } from '../models/ventaModel';
+import { DetalleVenta } from '../models/detalleVentaModel';
 
 dotenv.config();
 
@@ -34,7 +36,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [Cliente, Boleta, Producto],
+  entities: [Cliente, Boleta, Producto, Venta, DetalleVenta],
   synchronize: true,
   logging: false, // Puedes activar en true para debug
 });

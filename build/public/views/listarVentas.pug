@@ -1,0 +1,32 @@
+extends layout
+
+block contenido
+  h2(style="text-align: center; margin-bottom: 1rem;") Listado de Ventas
+
+  .boton-crear(style="display: flex; justify-content: flex-end; margin-bottom: 1rem;")
+    a(
+      href="/ventas/crear",
+      style="background: #007bff; color: white; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none; transition: background-color 0.3s;"
+      onmouseover="this.style.background='#0056b3'"
+      onmouseout="this.style.background='#007bff'"
+    ) Nueva Venta
+
+  if ventas.length
+    .tabla-container(style="display: flex; justify-content: center;")
+      table(border="1", cellpadding="10", cellspacing="0", style="width: 90%; border-collapse: collapse;")
+        thead
+          tr(style="background-color: #f0f0f0; text-align: center;")
+            th Fecha
+            th Total
+            th Productos Vendidos
+        tbody
+          each venta in ventas
+            tr(style="text-align: center;")
+              td= new Date(venta.fecha).toLocaleDateString()
+              td $#{Number(venta.total || 0).toFixed(2)}
+              td
+                ul(style="list-style: none; padding: 0; margin: 0;")
+                  each detalle in venta.detalles
+                    li #{detalle.producto.nombre} × #{detalle.cantidad} @ $#{Number(detalle.precio_unitario || 0).toFixed(2)}
+  else
+    p(style="text-align: center;") No hay ventas registradas.

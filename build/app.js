@@ -21,6 +21,7 @@ const conexion_1 = require("./db/conexion");
 const productoModel_1 = require("./models/productoModel");
 const boletaRouter_1 = __importDefault(require("./routes/boletaRouter"));
 const inventarioRouter_1 = __importDefault(require("./routes/inventarioRouter"));
+const ventasRouter_1 = __importDefault(require("./routes/ventasRouter"));
 const app = (0, express_1.default)();
 // Configurar motor de vistas (Pug)
 app.set('view engine', 'pug');
@@ -52,4 +53,5 @@ app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 // Rutas específicas
 app.use('/boletas', boletaRouter_1.default);
 app.use('/inventario', inventarioRouter_1.default);
+app.use('/ventas', ventasRouter_1.default);
 exports.default = app;

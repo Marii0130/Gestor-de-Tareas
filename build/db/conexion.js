@@ -50,6 +50,8 @@ const dotenv = __importStar(require("dotenv"));
 const clienteModel_1 = require("../models/clienteModel");
 const boletaModel_1 = require("../models/boletaModel");
 const productoModel_1 = require("../models/productoModel");
+const ventaModel_1 = require("../models/ventaModel");
+const detalleVentaModel_1 = require("../models/detalleVentaModel");
 dotenv.config();
 const port = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306;
 function createDatabaseIfNotExists() {
@@ -78,7 +80,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    entities: [clienteModel_1.Cliente, boletaModel_1.Boleta, productoModel_1.Producto],
+    entities: [clienteModel_1.Cliente, boletaModel_1.Boleta, productoModel_1.Producto, ventaModel_1.Venta, detalleVentaModel_1.DetalleVenta],
     synchronize: true,
     logging: false, // Puedes activar en true para debug
 });

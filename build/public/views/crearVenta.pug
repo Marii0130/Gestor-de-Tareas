@@ -1,0 +1,61 @@
+extends layout
+
+block contenido
+  h2(style="text-align: center; margin-bottom: 1rem;") Crear Venta
+
+  form(method="POST", action="/ventas", onsubmit="return prepararEnvioVenta()")
+    table(style="width: 90%; margin: 0 auto 1rem auto; border-collapse: collapse;")
+      thead
+        tr(style="background-color: #f0f0f0; text-align: center;")
+          th Producto
+          th Cantidad
+          th Precio Unitario
+          th Subtotal
+      tbody
+        each producto, index in productos
+          - const precio = Number(producto.precio_venta) || 0
+          tr(style="text-align: center;")
+            td= producto.nombre
+            td
+              input(
+                type="number",
+                name=`productos[${index}][cantidad]`,
+                min="0",
+                value="0",
+                class="cantidad-input",
+                data-precio=precio,
+                oninput="actualizarSubtotal(this)"
+              )
+              input(type="hidden", name=`productos[${index}][id]`, value=producto.id)
+            td $#{precio.toFixed(2)}
+            td(class="subtotal") $0.00
+
+    div(style="width: 90%; margin: 0 auto; text-align: right; font-weight: bold; font-size: 1.2rem;")
+      | Total:
+      span#total $#{Number(venta.total).toFixed(2)}
+
+    div(style="width: 90%; margin: 1rem auto 0 auto; text-align: center;")
+      button(type="submit", style="background: #007bff; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px;") Confirmar Venta
+      a(href="/ventas/listar", style="margin-left: 1rem; text-decoration: none; color: #555;") Cancelar
+
+  script.
+    function actualizarSubtotal(input) {
+      const fila = input.closest('tr');
+      const precio = parseFloat(input.dataset.precio) || 0;
+      const cantidad = parseInt(input.value) || 0;
+      const subtotal = (precio * cantidad).toFixed(2);
+      fila.querySelector('.subtotal').textContent = `$${subtotal}`;
+      actualizarTotal();
+    }
+
+    function actualizarTotal() {
+      const subtotales = Array.from(document.querySelectorAll('.subtotal')).map(td =>
+        parseFloat(td.textContent.replace('$', '')) || 0
+      );
+      const total = subtotales.reduce((acc, val) => acc + val, 0).toFixed(2);
+      document.getElementById('total').textContent = `$${total}`;
+    }
+
+    function prepararEnvioVenta() {
+      return true; // puede validarse antes de enviar si es necesario
+    }
