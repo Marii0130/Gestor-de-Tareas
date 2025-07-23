@@ -25,7 +25,7 @@ const ventasRouter_1 = __importDefault(require("./routes/ventasRouter"));
 const reparacionesRouter_1 = __importDefault(require("./routes/reparacionesRouter"));
 const reportesRouter_1 = __importDefault(require("./routes/reportesRouter"));
 const ingresosRouter_1 = __importDefault(require("./routes/ingresosRouter"));
-const reporteReparacionesRouter_1 = __importDefault(require("./routes/reporteReparacionesRouter"));
+const reparacionesRealizadasRouter_1 = __importDefault(require("./routes/reparacionesRealizadasRouter"));
 const gananciasRouter_1 = __importDefault(require("./routes/gananciasRouter"));
 const app = (0, express_1.default)();
 // Configurar motor de vistas (Pug)
@@ -62,6 +62,6 @@ app.use('/ventas', ventasRouter_1.default);
 app.use('/reparaciones', reparacionesRouter_1.default);
 app.use('/reportes', reportesRouter_1.default);
 app.use('/reportes/ingresos', ingresosRouter_1.default);
-app.use('/reportes/reparaciones', reporteReparacionesRouter_1.default);
+app.use('/reportes/reparaciones', reparacionesRealizadasRouter_1.default);
 app.use('/reportes/ganancias', gananciasRouter_1.default);
 exports.default = app;

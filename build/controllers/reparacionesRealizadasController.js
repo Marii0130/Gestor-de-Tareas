@@ -9,56 +9,130 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generarReporteReparaciones = exports.mostrarFormularioReparaciones = void 0;
+exports.generarReporteReparaciones = exports.buscarReparaciones = exports.mostrarFormularioReparaciones = void 0;
 const typeorm_1 = require("typeorm");
 const conexion_1 = require("../db/conexion");
-const boletaModel_1 = require("../models/boletaModel"); // Ajusta según tu proyecto
-const boletaRepo = conexion_1.AppDataSource.getRepository(boletaModel_1.Boleta);
-const mostrarFormularioReparaciones = (req, res) => {
+const boletaModel_1 = require("../models/boletaModel");
+const reporteModel_1 = require("../models/reporteModel");
+const repoBoleta = conexion_1.AppDataSource.getRepository(boletaModel_1.Boleta);
+const repoReporte = conexion_1.AppDataSource.getRepository(reporteModel_1.Reporte);
+// Obtener lunes de la semana ISO
+function getMondayOfWeek(year, week) {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay() || 7;
+    const monday = new Date(simple);
+    monday.setDate(simple.getDate() - dow + 1);
+    return monday;
+}
+const mostrarFormularioReparaciones = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.render('reparacionesRealizadas', {
-        pagina: 'Reporte de Reparaciones',
-        resultado: null
+        datos: null,
+        tipo: 'semanal',
+        periodo: null,
+        reporteYaGenerado: false,
+        semana: '',
+        mes: ''
     });
-};
+});
 exports.mostrarFormularioReparaciones = mostrarFormularioReparaciones;
-const generarReporteReparaciones = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { fechaInicio, fechaFin } = req.body;
-        if (!fechaInicio || !fechaFin) {
-            res.status(400).send('Debe ingresar fecha de inicio y fin.');
-            return;
-        }
-        const inicio = new Date(fechaInicio);
-        const fin = new Date(fechaFin);
-        inicio.setHours(0, 0, 0, 0);
-        fin.setHours(23, 59, 59, 999);
-        const boletas = yield boletaRepo.find({
+const buscarReparaciones = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { tipo, semana, mes } = req.body;
+    let fechaInicio, fechaFin;
+    let periodoTexto = '';
+    let semanaFinal = '', mesFinal = '';
+    if (tipo === 'semanal' && semana) {
+        const [anioStr, semanaStr] = semana.split('-W');
+        const anio = Number(anioStr);
+        const semanaNum = parseInt(semanaStr);
+        fechaInicio = getMondayOfWeek(anio, semanaNum);
+        fechaFin = new Date(fechaInicio);
+        fechaFin.setDate(fechaFin.getDate() + 6);
+        periodoTexto = `${fechaInicio.toLocaleDateString()} - ${fechaFin.toLocaleDateString()}`;
+        semanaFinal = semana;
+    }
+    else if (tipo === 'mensual' && mes) {
+        const [anioStr, mesStr] = mes.split('-');
+        const anio = Number(anioStr);
+        const mesNum = parseInt(mesStr);
+        fechaInicio = new Date(anio, mesNum - 1, 1);
+        fechaFin = new Date(anio, mesNum, 0);
+        periodoTexto = `${fechaInicio.toLocaleDateString()} - ${fechaFin.toLocaleDateString()}`;
+        mesFinal = mes;
+    }
+    else {
+        return res.render('reparacionesRealizadas', {
+            datos: null,
+            tipo,
+            periodo: null,
+            reporteYaGenerado: false,
+            semana: '',
+            mes: ''
+        });
+    }
+    const [boletasEntregadas, boletasEntregadasNoReparadas, boletasRecibidas] = yield Promise.all([
+        repoBoleta.find({
             where: {
-                estado: (0, typeorm_1.In)(['entregado', 'entregado_no_reparado']),
-                fechaEntrega: (0, typeorm_1.Between)(inicio, fin)
-            },
-            relations: ['cliente']
-        });
-        const reparadas = boletas.filter(b => b.estado === 'entregado').length;
-        const noReparadas = boletas.filter(b => b.estado === 'entregado_no_reparado').length;
-        const totalCobrado = boletas.reduce((sum, b) => sum + (b.total || 0), 0);
-        const promedio = boletas.length ? totalCobrado / boletas.length : 0;
-        res.render('ReparacionesRealizadas', {
-            pagina: 'Reporte de Reparaciones',
-            resultado: {
-                fechaInicio: inicio.toLocaleDateString(),
-                fechaFin: fin.toLocaleDateString(),
-                totalReparaciones: boletas.length,
-                reparadas,
-                noReparadas,
-                totalCobrado: totalCobrado.toFixed(2),
-                promedioPorReparacion: promedio.toFixed(2),
-                boletas
+                fechaEntrega: (0, typeorm_1.Between)(fechaInicio, fechaFin),
+                estado: (0, typeorm_1.In)(['entregado'])
             }
-        });
+        }),
+        repoBoleta.find({
+            where: {
+                fechaEntrega: (0, typeorm_1.Between)(fechaInicio, fechaFin),
+                estado: 'entregado_no_reparado'
+            }
+        }),
+        repoBoleta.find({
+            where: {
+                fecha_ingreso: (0, typeorm_1.Between)(fechaInicio, fechaFin)
+            }
+        })
+    ]);
+    const totalEntregadas = boletasEntregadas.length;
+    const totalEntregadasNoReparadas = boletasEntregadasNoReparadas.length;
+    const totalRecibidas = boletasRecibidas.length;
+    const datos = {
+        totalEntregadas,
+        totalEntregadasNoReparadas,
+        totalRecibidas
+    };
+    const reporteExistente = yield repoReporte.findOne({
+        where: {
+            tipo: 'reparaciones',
+            parametros: JSON.stringify({ tipo, periodo: periodoTexto })
+        }
+    });
+    res.render('reparacionesRealizadas', {
+        datos,
+        tipo,
+        periodo: periodoTexto,
+        reporteYaGenerado: !!reporteExistente,
+        semana: semanaFinal,
+        mes: mesFinal
+    });
+});
+exports.buscarReparaciones = buscarReparaciones;
+const generarReporteReparaciones = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { tipo, periodo, totalEntregadas, totalEntregadasNoReparadas, totalRecibidas } = req.body;
+    const reporteExistente = yield repoReporte.findOne({
+        where: {
+            tipo: 'reparaciones',
+            parametros: JSON.stringify({ tipo, periodo })
+        }
+    });
+    if (reporteExistente) {
+        return res.redirect('/reportes');
     }
-    catch (error) {
-        next(error);
-    }
+    const nuevoReporte = repoReporte.create({
+        tipo: 'reparaciones',
+        parametros: JSON.stringify({ tipo, periodo }),
+        resumen: JSON.stringify({
+            totalEntregadas: Number(totalEntregadas) || 0,
+            totalEntregadasNoReparadas: Number(totalEntregadasNoReparadas) || 0,
+            totalRecibidas: Number(totalRecibidas) || 0
+        })
+    });
+    yield repoReporte.save(nuevoReporte);
+    res.redirect('/reportes');
 });
 exports.generarReporteReparaciones = generarReporteReparaciones;

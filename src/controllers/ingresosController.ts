@@ -9,7 +9,7 @@ const repoVenta = AppDataSource.getRepository(Venta)
 const repoBoleta = AppDataSource.getRepository(Boleta)
 const repoReporte = AppDataSource.getRepository(Reporte)
 
-// 🔧 Utilidades para formatear fechas
+// 🔧 Utilidades de formato
 function obtenerRangoSemana(semana: string): string {
   const [anioStr, semanaStr] = semana.split('-W')
   const anio = parseInt(anioStr, 10)
@@ -47,17 +47,19 @@ function obtenerRangoMensual(mes: string): string {
   return `${formato(inicio)} - ${formato(fin)}`
 }
 
-// 1. Mostrar formulario sin datos
+// 🟡 1. Mostrar el formulario vacío
 export const mostrarFormularioIngresos = async (req: Request, res: Response) => {
   res.render('ingresosPorFecha', {
     datos: null,
     tipo: null,
     periodo: null,
-    reporteYaGenerado: false
+    reporteYaGenerado: false,
+    semana: null,
+    mes: null
   })
 }
 
-// 2. Buscar ingresos y mostrar resultados
+// 🟢 2. Buscar ingresos según fechas
 export const buscarIngresos = async (req: Request, res: Response) => {
   const { tipo, semana, mes } = req.body
 
@@ -84,38 +86,54 @@ export const buscarIngresos = async (req: Request, res: Response) => {
       datos: null,
       tipo: null,
       periodo: null,
-      reporteYaGenerado: false
+      reporteYaGenerado: false,
+      semana,
+      mes
     })
   }
 
-  // Buscar ingresos
+  // 🔍 Buscar datos
+
+  // Ventas
   const ventas = await repoVenta.find({
     where: { fecha: Between(fechaInicio, fechaFin) }
   })
-
   const totalVentas = ventas.reduce((sum, v) => sum + Number(v.total || 0), 0)
 
+  // Señado
   const boletasConSeña = await repoBoleta.find({
     where: {
       fechaSenado: Between(fechaInicio, fechaFin),
       estado: In(['reparando', 'reparado', 'entregado'])
     }
   })
-
   const totalSeñas = boletasConSeña.reduce((sum, b) => sum + Number(b.senado || 0), 0)
 
+  // Entregas (reparadas y no reparadas)
   const boletasEntregadas = await repoBoleta.find({
-    where: {
-      fechaEntrega: Between(fechaInicio, fechaFin),
-      estado: 'entregado'
-    }
+    where: [
+      {
+        fechaEntrega: Between(fechaInicio, fechaFin),
+        estado: 'entregado'
+      },
+      {
+        fechaEntrega: Between(fechaInicio, fechaFin),
+        estado: 'entregado_no_reparado'
+      }
+    ]
   })
 
-  const totalEntregas = boletasEntregadas.reduce(
-    (sum, b) => sum + (Number(b.total || 0) - Number(b.senado || 0)),
-    0
-  )
+  let totalEntregas = 0
 
+  for (const b of boletasEntregadas) {
+    if (b.estado === 'entregado') {
+      totalEntregas += Number(b.total || 0) - Number(b.senado || 0)
+    } else if (b.estado === 'entregado_no_reparado') {
+      totalEntregas += Number(b.total || 0)
+    }
+  }
+
+  // Total final
   const totalIngresos = totalVentas + totalSeñas + totalEntregas
 
   const datos = {
@@ -136,11 +154,13 @@ export const buscarIngresos = async (req: Request, res: Response) => {
     datos,
     tipo,
     periodo,
-    reporteYaGenerado: !!reporteExistente
+    reporteYaGenerado: !!reporteExistente,
+    semana,
+    mes
   })
 }
 
-// 3. Generar y guardar el reporte
+// 🧾 3. Guardar el reporte generado
 export const generarReporteIngresos = async (req: Request, res: Response) => {
   const { tipo, periodo, totalIngresos, totalVentas, totalSeñas, totalEntregas } = req.body
 

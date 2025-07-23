@@ -1,81 +1,157 @@
 extends layout
 
 block contenido
+  h2 Reporte de Reparaciones Realizadas
+
+  form(method="POST" action="/reportes/reparaciones/buscar")
+    div
+      label(for="tipo") Tipo de reporte:
+      select(name="tipo" id="tipo" required)
+        option(value="semanal" selected=tipo !== 'mensual') Semanal
+        option(value="mensual" selected=tipo === 'mensual') Mensual
+
+    div#selectorSemana(style=tipo === 'mensual' ? 'display: none;' : '')
+      label(for="semana") Seleccionar semana:
+      input(type="week" name="semana" id="semanaInput" value=semana)
+
+    div#selectorMes(style=tipo === 'mensual' ? '' : 'display: none;')
+      label(for="mes") Seleccionar mes:
+      input(type="month" name="mes" id="mesInput" value=mes)
+
+    button(type="submit") Buscar
+
+  if datos
+    - const totalEntregadas = datos.totalEntregadas !== undefined ? datos.totalEntregadas : 0
+    - const totalNoReparadas = datos.totalEntregadasNoReparadas !== undefined ? datos.totalEntregadasNoReparadas : 0
+    - const totalRecibidas = datos.totalRecibidas !== undefined ? datos.totalRecibidas : 0
+    - const totalGeneral = datos.totalGeneral !== undefined ? datos.totalGeneral : (totalEntregadas + totalNoReparadas + totalRecibidas)
+
+    h3 Resultados para #{tipo} - #{periodo}
+
+    .indicadores
+      .indicador
+        h4 Total Reparaciones Entregadas
+        p #{totalEntregadas}
+      .indicador
+        h4 Total No Reparadas Entregadas
+        p #{totalNoReparadas}
+      .indicador
+        h4 Total Recibidas
+        p #{totalRecibidas}
+      .indicador
+        h4 Total General
+        p #{totalGeneral}
+
+    form(method="POST" action="/reportes/reparaciones/generar")
+      input(type="hidden" name="tipo" value=tipo)
+      input(type="hidden" name="periodo" value=periodo)
+      input(type="hidden" name="totalEntregadas" value=totalEntregadas)
+      input(type="hidden" name="totalEntregadasNoReparadas" value=totalNoReparadas)
+      input(type="hidden" name="totalRecibidas" value=totalRecibidas)
+      input(type="hidden" name="totalGeneral" value=totalGeneral)
+
+      button(type="submit" id="btnGenerarReporte") Generar Reporte
+
+      if reporteYaGenerado
+        p(style="color: red; margin-top: 0.5rem;") Ya se generó un reporte para este periodo.
+
+  else
+    p No hay datos para mostrar.
+
   style.
-    form {
-      margin-bottom: 1.5rem;
+    .indicadores {
       display: flex;
       gap: 1rem;
-      align-items: center;
+      margin: 1.5rem 0;
       flex-wrap: wrap;
     }
-    label {
-      font-weight: bold;
+    .indicador {
+      background-color: #f0f8ff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      flex: 1 1 220px;
+      text-align: center;
+      color: #005b96;
     }
-    input {
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+    .indicador h4 {
+      margin: 0 0 0.5rem;
     }
     button {
       background-color: #007bff;
       color: white;
+      padding: 0.6rem 1.2rem;
       border: none;
-      padding: 0.4rem 1rem;
-      border-radius: 4px;
+      border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+      transition: background-color 0.3s ease;
       margin-top: 1rem;
     }
-    th, td {
-      padding: 0.5rem 1rem;
-      border: 1px solid #ddd;
+    button:hover:not(:disabled) {
+      background-color: #0056b3;
     }
-    thead {
-      background-color: #f5f5f5;
-    }
-    tbody tr:hover {
-      background-color: #e9f2ff;
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
     }
 
-block contenido
-  h1 Reporte de Reparaciones Realizadas
+  script.
+    const btnGenerar = document.getElementById('btnGenerarReporte');
+    const tipo = '#{tipo || ''}';
+    const semana = '#{semana || ''}';
+    const mes = '#{mes || ''}';
+    const reporteYaGenerado = #{reporteYaGenerado ? 'true' : 'false'};
+    const hayDatos = #{datos ? 'true' : 'false'};
 
-  form(method="POST", action="/reportes/reparaciones")
-    label(for="fechaInicio") Fecha inicio:
-    input(type="date", name="fechaInicio", id="fechaInicio" required)
+    // Función para validar periodo según reglas de fecha
+    function esPeriodoValido(tipo, semana, mes) {
+      const ahora = new Date();
 
-    label(for="fechaFin") Fecha fin:
-    input(type="date", name="fechaFin", id="fechaFin" required)
+      if (tipo === 'semanal') {
+        if (!semana) return false;
+        const [anio, semanaStr] = semana.split('-W');
+        const semanaNum = parseInt(semanaStr);
+        const primerEne = new Date(anio, 0, 1);
+        const diaSemana = primerEne.getDay() || 7;
+        const diasOffset = (semanaNum - 1) * 7 + (1 - diaSemana);
+        const lunesSemana = new Date(anio, 0, 1 + diasOffset);
+        const sabado13hs = new Date(lunesSemana);
+        sabado13hs.setDate(sabado13hs.getDate() + 5);
+        sabado13hs.setHours(13, 0, 0, 0);
 
-    button(type="submit") Generar reporte
+        if (lunesSemana > ahora) return false;
+        if (ahora < sabado13hs) return false;
+        return true;
+      }
+      if (tipo === 'mensual') {
+        if (!mes) return false;
+        const [anio, mesStr] = mes.split('-');
+        const mesNum = parseInt(mesStr) - 1;
+        const mesActual = ahora.getMonth();
+        const anioActual = ahora.getFullYear();
 
-  if resultado
-    h2 Resultado del reporte
-    p Periodo: #{resultado.fechaInicio} - #{resultado.fechaFin}
-    p Total reparaciones: #{resultado.totalReparaciones}
-    p Reparadas: #{resultado.reparadas}
-    p No reparadas: #{resultado.noReparadas}
-    p Total cobrado: $#{resultado.totalCobrado}
-    p Promedio por reparación: $#{resultado.promedioPorReparacion}
+        if (anio > anioActual) return false;
+        if (anio == anioActual && mesNum >= mesActual) return false;
+        return true;
+      }
+      return false;
+    }
 
-    table
-      thead
-        tr
-          th Fecha Entrega
-          th Cliente
-          th Estado
-          th Total
-      tbody
-        each boleta in resultado.boletas
-          tr
-            td= new Date(boleta.fechaEntrega).toLocaleDateString()
-            td= boleta.cliente.nombre
-            td= boleta.estado === 'entregado' ? 'Reparada' : 'No reparada'
-            td $#{boleta.total.toFixed(2)}
+    window.addEventListener('DOMContentLoaded', () => {
+      // Solo habilitar el botón si:
+      // - hay datos que mostrar (resultado de búsqueda)
+      // - el periodo es válido
+      // - no hay reporte ya generado
+      if (btnGenerar) {
+        if (!hayDatos) {
+          btnGenerar.disabled = false; // Permitir generar aunque no haya datos (por lo que pediste)
+        } else {
+          const valido = esPeriodoValido(tipo, semana, mes);
+          btnGenerar.disabled = reporteYaGenerado || !valido;
+          if (btnGenerar.disabled && reporteYaGenerado) {
+            btnGenerar.title = "Ya existe un reporte para este período";
+          }
+        }
+      }
+    });

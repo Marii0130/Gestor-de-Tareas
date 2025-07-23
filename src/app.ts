@@ -12,7 +12,7 @@ import ventasRouter from './routes/ventasRouter';
 import reparacionesRouter from './routes/reparacionesRouter'
 import reportesRouter from './routes/reportesRouter'
 import ingresosRouter from './routes/ingresosRouter'
-import reporteReparacionesRouter from './routes/reporteReparacionesRouter'
+import reporteReparacionesRouter from './routes/reparacionesRealizadasRouter'
 import gananciasRouter from './routes/gananciasRouter'
 
 const app = express();

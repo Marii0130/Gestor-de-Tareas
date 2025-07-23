@@ -1,58 +1,138 @@
-import { RequestHandler } from 'express'
+import { Request, Response } from 'express'
 import { Between, In } from 'typeorm'
 import { AppDataSource } from '../db/conexion'
-import { Boleta } from '../models/boletaModel' // Ajusta según tu proyecto
+import { Boleta } from '../models/boletaModel'
+import { Reporte } from '../models/reporteModel'
 
-const boletaRepo = AppDataSource.getRepository(Boleta)
+const repoBoleta = AppDataSource.getRepository(Boleta)
+const repoReporte = AppDataSource.getRepository(Reporte)
 
-export const mostrarFormularioReparaciones: RequestHandler = (req, res) => {
+// Obtener lunes de la semana ISO
+function getMondayOfWeek(year: number, week: number): Date {
+  const simple = new Date(year, 0, 1 + (week - 1) * 7)
+  const dow = simple.getDay() || 7
+  const monday = new Date(simple)
+  monday.setDate(simple.getDate() - dow + 1)
+  return monday
+}
+
+export const mostrarFormularioReparaciones = async (req: Request, res: Response) => {
   res.render('reparacionesRealizadas', {
-    pagina: 'Reporte de Reparaciones',
-    resultado: null
+    datos: null,
+    tipo: 'semanal',
+    periodo: null,
+    reporteYaGenerado: false,
+    semana: '',
+    mes: ''
   })
 }
 
-export const generarReporteReparaciones: RequestHandler = async (req, res, next) => {
-  try {
-    const { fechaInicio, fechaFin } = req.body as { fechaInicio: string; fechaFin: string }
+export const buscarReparaciones = async (req: Request, res: Response) => {
+  const { tipo, semana, mes } = req.body
 
-    if (!fechaInicio || !fechaFin) {
-      res.status(400).send('Debe ingresar fecha de inicio y fin.')
-      return
-    }
+  let fechaInicio: Date, fechaFin: Date
+  let periodoTexto = ''
+  let semanaFinal = '', mesFinal = ''
 
-    const inicio = new Date(fechaInicio)
-    const fin = new Date(fechaFin)
-    inicio.setHours(0, 0, 0, 0)
-    fin.setHours(23, 59, 59, 999)
-
-    const boletas = await boletaRepo.find({
-      where: {
-        estado: In(['entregado', 'entregado_no_reparado']),
-        fechaEntrega: Between(inicio, fin)
-      },
-      relations: ['cliente']
+  if (tipo === 'semanal' && semana) {
+    const [anioStr, semanaStr] = semana.split('-W')
+    const anio = Number(anioStr)
+    const semanaNum = parseInt(semanaStr)
+    fechaInicio = getMondayOfWeek(anio, semanaNum)
+    fechaFin = new Date(fechaInicio)
+    fechaFin.setDate(fechaFin.getDate() + 6)
+    periodoTexto = `${fechaInicio.toLocaleDateString()} - ${fechaFin.toLocaleDateString()}`
+    semanaFinal = semana
+  } else if (tipo === 'mensual' && mes) {
+    const [anioStr, mesStr] = mes.split('-')
+    const anio = Number(anioStr)
+    const mesNum = parseInt(mesStr)
+    fechaInicio = new Date(anio, mesNum - 1, 1)
+    fechaFin = new Date(anio, mesNum, 0)
+    periodoTexto = `${fechaInicio.toLocaleDateString()} - ${fechaFin.toLocaleDateString()}`
+    mesFinal = mes
+  } else {
+    return res.render('reparacionesRealizadas', {
+      datos: null,
+      tipo,
+      periodo: null,
+      reporteYaGenerado: false,
+      semana: '',
+      mes: ''
     })
+  }
 
-    const reparadas = boletas.filter(b => b.estado === 'entregado').length
-    const noReparadas = boletas.filter(b => b.estado === 'entregado_no_reparado').length
-    const totalCobrado = boletas.reduce((sum, b) => sum + (b.total || 0), 0)
-    const promedio = boletas.length ? totalCobrado / boletas.length : 0
-
-    res.render('ReparacionesRealizadas', {
-      pagina: 'Reporte de Reparaciones',
-      resultado: {
-        fechaInicio: inicio.toLocaleDateString(),
-        fechaFin: fin.toLocaleDateString(),
-        totalReparaciones: boletas.length,
-        reparadas,
-        noReparadas,
-        totalCobrado: totalCobrado.toFixed(2),
-        promedioPorReparacion: promedio.toFixed(2),
-        boletas
+  const [boletasEntregadas, boletasEntregadasNoReparadas, boletasRecibidas] = await Promise.all([
+    repoBoleta.find({
+      where: {
+        fechaEntrega: Between(fechaInicio, fechaFin),
+        estado: In(['entregado'])
+      }
+    }),
+    repoBoleta.find({
+      where: {
+        fechaEntrega: Between(fechaInicio, fechaFin),
+        estado: 'entregado_no_reparado'
+      }
+    }),
+    repoBoleta.find({
+      where: {
+        fecha_ingreso: Between(fechaInicio, fechaFin)
       }
     })
-  } catch (error) {
-    next(error)
+  ])
+
+  const totalEntregadas = boletasEntregadas.length
+  const totalEntregadasNoReparadas = boletasEntregadasNoReparadas.length
+  const totalRecibidas = boletasRecibidas.length
+
+  const datos = {
+    totalEntregadas,
+    totalEntregadasNoReparadas,
+    totalRecibidas
   }
+
+  const reporteExistente = await repoReporte.findOne({
+    where: {
+      tipo: 'reparaciones',
+      parametros: JSON.stringify({ tipo, periodo: periodoTexto })
+    }
+  })
+
+  res.render('reparacionesRealizadas', {
+    datos,
+    tipo,
+    periodo: periodoTexto,
+    reporteYaGenerado: !!reporteExistente,
+    semana: semanaFinal,
+    mes: mesFinal
+  })
+}
+
+export const generarReporteReparaciones = async (req: Request, res: Response) => {
+  const { tipo, periodo, totalEntregadas, totalEntregadasNoReparadas, totalRecibidas } = req.body
+
+  const reporteExistente = await repoReporte.findOne({
+    where: {
+      tipo: 'reparaciones',
+      parametros: JSON.stringify({ tipo, periodo })
+    }
+  })
+
+  if (reporteExistente) {
+    return res.redirect('/reportes')
+  }
+
+  const nuevoReporte = repoReporte.create({
+    tipo: 'reparaciones',
+    parametros: JSON.stringify({ tipo, periodo }),
+    resumen: JSON.stringify({
+      totalEntregadas: Number(totalEntregadas) || 0,
+      totalEntregadasNoReparadas: Number(totalEntregadasNoReparadas) || 0,
+      totalRecibidas: Number(totalRecibidas) || 0
+    })
+  })
+
+  await repoReporte.save(nuevoReporte)
+  res.redirect('/reportes')
 }

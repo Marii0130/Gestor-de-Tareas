@@ -4,5 +4,6 @@ const express_1 = require("express");
 const reparacionesRealizadasController_1 = require("../controllers/reparacionesRealizadasController");
 const router = (0, express_1.Router)();
 router.get('/', reparacionesRealizadasController_1.mostrarFormularioReparaciones);
-router.post('/', reparacionesRealizadasController_1.generarReporteReparaciones);
+router.post('/buscar', reparacionesRealizadasController_1.buscarReparaciones);
+router.post('/generar', reparacionesRealizadasController_1.generarReporteReparaciones);
 exports.default = router;

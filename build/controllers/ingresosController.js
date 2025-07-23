@@ -18,7 +18,7 @@ const reporteModel_1 = require("../models/reporteModel");
 const repoVenta = conexion_1.AppDataSource.getRepository(ventaModel_1.Venta);
 const repoBoleta = conexion_1.AppDataSource.getRepository(boletaModel_1.Boleta);
 const repoReporte = conexion_1.AppDataSource.getRepository(reporteModel_1.Reporte);
-// 🔧 Utilidades para formatear fechas
+// 🔧 Utilidades de formato
 function obtenerRangoSemana(semana) {
     const [anioStr, semanaStr] = semana.split('-W');
     const anio = parseInt(anioStr, 10);
@@ -45,17 +45,19 @@ function obtenerRangoMensual(mes) {
         .padStart(2, '0')}/${d.getFullYear()}`;
     return `${formato(inicio)} - ${formato(fin)}`;
 }
-// 1. Mostrar formulario sin datos
+// 🟡 1. Mostrar el formulario vacío
 const mostrarFormularioIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.render('ingresosPorFecha', {
         datos: null,
         tipo: null,
         periodo: null,
-        reporteYaGenerado: false
+        reporteYaGenerado: false,
+        semana: null,
+        mes: null
     });
 });
 exports.mostrarFormularioIngresos = mostrarFormularioIngresos;
-// 2. Buscar ingresos y mostrar resultados
+// 🟢 2. Buscar ingresos según fechas
 const buscarIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { tipo, semana, mes } = req.body;
     let fechaInicio, fechaFin, periodo = '';
@@ -82,14 +84,18 @@ const buscarIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function*
             datos: null,
             tipo: null,
             periodo: null,
-            reporteYaGenerado: false
+            reporteYaGenerado: false,
+            semana,
+            mes
         });
     }
-    // Buscar ingresos
+    // 🔍 Buscar datos
+    // Ventas
     const ventas = yield repoVenta.find({
         where: { fecha: (0, typeorm_1.Between)(fechaInicio, fechaFin) }
     });
     const totalVentas = ventas.reduce((sum, v) => sum + Number(v.total || 0), 0);
+    // Señado
     const boletasConSeña = yield repoBoleta.find({
         where: {
             fechaSenado: (0, typeorm_1.Between)(fechaInicio, fechaFin),
@@ -97,13 +103,29 @@ const buscarIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
     });
     const totalSeñas = boletasConSeña.reduce((sum, b) => sum + Number(b.senado || 0), 0);
+    // Entregas (reparadas y no reparadas)
     const boletasEntregadas = yield repoBoleta.find({
-        where: {
-            fechaEntrega: (0, typeorm_1.Between)(fechaInicio, fechaFin),
-            estado: 'entregado'
-        }
+        where: [
+            {
+                fechaEntrega: (0, typeorm_1.Between)(fechaInicio, fechaFin),
+                estado: 'entregado'
+            },
+            {
+                fechaEntrega: (0, typeorm_1.Between)(fechaInicio, fechaFin),
+                estado: 'entregado_no_reparado'
+            }
+        ]
     });
-    const totalEntregas = boletasEntregadas.reduce((sum, b) => sum + (Number(b.total || 0) - Number(b.senado || 0)), 0);
+    let totalEntregas = 0;
+    for (const b of boletasEntregadas) {
+        if (b.estado === 'entregado') {
+            totalEntregas += Number(b.total || 0) - Number(b.senado || 0);
+        }
+        else if (b.estado === 'entregado_no_reparado') {
+            totalEntregas += Number(b.total || 0);
+        }
+    }
+    // Total final
     const totalIngresos = totalVentas + totalSeñas + totalEntregas;
     const datos = {
         totalIngresos,
@@ -121,11 +143,13 @@ const buscarIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function*
         datos,
         tipo,
         periodo,
-        reporteYaGenerado: !!reporteExistente
+        reporteYaGenerado: !!reporteExistente,
+        semana,
+        mes
     });
 });
 exports.buscarIngresos = buscarIngresos;
-// 3. Generar y guardar el reporte
+// 🧾 3. Guardar el reporte generado
 const generarReporteIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { tipo, periodo, totalIngresos, totalVentas, totalSeñas, totalEntregas } = req.body;
     const nuevoReporte = repoReporte.create({

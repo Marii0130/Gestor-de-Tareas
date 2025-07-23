@@ -7,49 +7,56 @@ block contenido
     div
       label(for="tipo") Tipo de reporte:
       select(name="tipo" id="tipo" required)
-        option(value="semanal") Semanal
-        option(value="mensual") Mensual
+        option(value="semanal" selected=tipo !== 'mensual') Semanal
+        option(value="mensual" selected=tipo === 'mensual') Mensual
 
-    div#selectorSemana
+    div#selectorSemana(style=tipo === 'mensual' ? 'display: none;' : '')
       label(for="semana") Seleccionar semana:
-      input(type="week" name="semana")
+      input(type="week" name="semana" id="semanaInput" value=semana)
 
-    div#selectorMes(style="display: none;")
+    div#selectorMes(style=tipo === 'mensual' ? '' : 'display: none;')
       label(for="mes") Seleccionar mes:
-      input(type="month" name="mes")
+      input(type="month" name="mes" id="mesInput" value=mes)
 
     button(type="submit") Buscar
 
   if datos
+    - const totalVentas = datos.totalVentas?.toFixed(2) || '0.00'
+    - const totalSeñas = datos.totalSeñas?.toFixed(2) || '0.00'
+    - const totalEntregas = datos.totalEntregas?.toFixed(2) || '0.00'
+    - const totalIngresos = datos.totalIngresos?.toFixed(2) || '0.00'
+
     h3 Resultados para #{tipo} - #{periodo}
 
     .indicadores
       .indicador
         h4 Total Ventas
-        p $#{datos.totalVentas.toFixed(2)}
+        p #{totalVentas}
       .indicador
         h4 Total Señados
-        p $#{datos.totalSeñas.toFixed(2)}
+        p #{totalSeñas}
       .indicador
         h4 Total Entregas
-        p $#{datos.totalEntregas.toFixed(2)}
+        p #{totalEntregas}
       .indicador
         h4 Total Ingresos
-        p $#{datos.totalIngresos.toFixed(2)}
+        p #{totalIngresos}
 
     form(method="POST" action="/reportes/ingresos/generar")
-      // Pasar datos ocultos para enviar el reporte
       input(type="hidden" name="tipo" value=tipo)
       input(type="hidden" name="periodo" value=periodo)
-      input(type="hidden" name="totalIngresos" value=datos.totalIngresos)
-      input(type="hidden" name="totalVentas" value=datos.totalVentas)
-      input(type="hidden" name="totalSeñas" value=datos.totalSeñas)
-      input(type="hidden" name="totalEntregas" value=datos.totalEntregas)
+      input(type="hidden" name="totalIngresos" value=totalIngresos)
+      input(type="hidden" name="totalVentas" value=totalVentas)
+      input(type="hidden" name="totalSeñas" value=totalSeñas)
+      input(type="hidden" name="totalEntregas" value=totalEntregas)
 
-      button(type="submit" disabled=reporteYaGenerado) Generar Reporte
+      button(type="submit" id="btnGenerarReporte") Generar Reporte
 
       if reporteYaGenerado
         p(style="color: red; margin-top: 0.5rem;") Ya se generó un reporte para este periodo.
+
+  else
+    p No hay datos para mostrar.
 
   style.
     .indicadores {
@@ -70,21 +77,95 @@ block contenido
     .indicador h4 {
       margin: 0 0 0.5rem;
     }
-
-  script.
-    const tipoSelect = document.getElementById('tipo');
-    const semanaDiv = document.getElementById('selectorSemana');
-    const mesDiv = document.getElementById('selectorMes');
-
-    function actualizarSelector() {
-      if (tipoSelect.value === 'mensual') {
-        semanaDiv.style.display = 'none';
-        mesDiv.style.display = 'block';
-      } else {
-        semanaDiv.style.display = 'block';
-        mesDiv.style.display = 'none';
-      }
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 1rem;
+    }
+    button:hover:not(:disabled) {
+      background-color: #0056b3;
+    }
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
     }
 
-    tipoSelect.addEventListener('change', actualizarSelector);
-    window.addEventListener('DOMContentLoaded', actualizarSelector);
+  script.
+    const tipo = '#{tipo || ''}';
+    const semana = '#{semana || ''}';
+    const mes = '#{mes || ''}';
+    const reporteYaGenerado = #{reporteYaGenerado ? 'true' : 'false'};
+    const hayDatos = #{datos ? 'true' : 'false'};
+    const btnGenerar = document.getElementById('btnGenerarReporte');
+
+    function esPeriodoValido(tipo, semana, mes) {
+      const ahora = new Date();
+
+      if (tipo === 'semanal') {
+        if (!semana) return false;
+        const [anio, semanaStr] = semana.split('-W');
+        const semanaNum = parseInt(semanaStr);
+        const primerEne = new Date(anio, 0, 1);
+        const diaSemana = primerEne.getDay() || 7;
+        const diasOffset = (semanaNum - 1) * 7 + (1 - diaSemana);
+        const lunesSemana = new Date(anio, 0, 1 + diasOffset);
+        const sabado13hs = new Date(lunesSemana);
+        sabado13hs.setDate(sabado13hs.getDate() + 5);
+        sabado13hs.setHours(13, 0, 0, 0);
+
+        if (lunesSemana > ahora) return false;
+        if (ahora < sabado13hs) return false;
+        return true;
+      }
+
+      if (tipo === 'mensual') {
+        if (!mes) return false;
+        const [anio, mesStr] = mes.split('-');
+        const mesNum = parseInt(mesStr) - 1;
+        const mesActual = ahora.getMonth();
+        const anioActual = ahora.getFullYear();
+
+        if (anio > anioActual) return false;
+        if (anio == anioActual && mesNum >= mesActual) return false;
+        return true;
+      }
+
+      return false;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (btnGenerar) {
+        if (!hayDatos) {
+          btnGenerar.disabled = false; // Permitido generar sin datos
+        } else {
+          const valido = esPeriodoValido(tipo, semana, mes);
+          btnGenerar.disabled = reporteYaGenerado || !valido;
+          if (btnGenerar.disabled && reporteYaGenerado) {
+            btnGenerar.title = "Ya existe un reporte para este período";
+          }
+        }
+      }
+
+      const tipoSelect = document.getElementById('tipo');
+      const semanaDiv = document.getElementById('selectorSemana');
+      const mesDiv = document.getElementById('selectorMes');
+
+      function actualizarSelector() {
+        if (tipoSelect.value === 'mensual') {
+          semanaDiv.style.display = 'none';
+          mesDiv.style.display = 'block';
+        } else {
+          semanaDiv.style.display = 'block';
+          mesDiv.style.display = 'none';
+        }
+      }
+
+      tipoSelect.addEventListener('change', actualizarSelector);
+      actualizarSelector();
+    });
