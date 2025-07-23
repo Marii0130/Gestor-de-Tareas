@@ -15,8 +15,39 @@ const condicionesOpciones = [
 // Listar todas las boletas
 export const consultarTodos = async (req: Request, res: Response): Promise<void> => {
   try {
-    const boletas = await boletaRepo.find({ relations: ['cliente'] });
-    res.render('listarBoletas', { boletas, pagina: 'Listado de Boletas' });
+    const estado = req.query.estado as string || '';
+    const clienteNombre = (req.query.cliente as string || '').trim();
+
+    // Query builder para aplicar filtros dinámicos
+    let query = boletaRepo.createQueryBuilder('boleta')
+      .leftJoinAndSelect('boleta.cliente', 'cliente');
+
+    if (estado) {
+      query = query.andWhere('boleta.estado = :estado', { estado });
+    }
+
+    if (clienteNombre) {
+      // Postgres, MySQL, SQLite: usar LOWER para case insensitive
+      query = query.andWhere('LOWER(cliente.nombre) LIKE :clienteNombre', { clienteNombre: `%${clienteNombre.toLowerCase()}%` });
+    }
+
+    const boletas = await query.getMany();
+
+    // Lista de estados para el select filtro en la vista
+    const estados = [
+      '', // opción "Todos"
+      'recibido', 'en_diagnostico', 'presupuesto_enviado', 'aprobado',
+      'reparando', 'esperando_repuestos', 'reparado', 'entregado',
+      'cancelado', 'no_reparado', 'entregado_no_reparado'
+    ];
+
+    res.render('listarBoletas', { 
+      boletas, 
+      pagina: 'Listado de Boletas',
+      estados,
+      filtroEstado: estado,
+      filtroCliente: clienteNombre
+    });
   } catch (error) {
     res.status(500).render('error', { mensaje: 'Error al obtener boletas' });
   }

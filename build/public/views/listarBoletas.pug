@@ -93,25 +93,36 @@ block contenido
       box-sizing: border-box;
     }
 
-  script.
-    function abrirModal(boletaId) {
-      const modal = document.getElementById('modal-' + boletaId);
-      if (modal) modal.style.display = 'block';
-      // Ocultar todos los inputs de total al abrir el modal
-      const inputTotalDiv = modal.querySelector('.input-total');
-      if(inputTotalDiv) inputTotalDiv.style.display = 'none';
+    // Estilos para el formulario filtros
+    #filtros {
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #filtros label {
+      font-weight: bold;
+    }
+    #filtros select, #filtros input[type="text"] {
+      padding: 0.3rem 0.5rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
     }
 
-    function cerrarModal(boletaId) {
-      const modal = document.getElementById('modal-' + boletaId);
-      if (modal) modal.style.display = 'none';
-    }
+  form#filtros(action='/boletas/listarBoletas', method='get')
+    label(for='estado') Estado:
+    select(name='estado', id='estado', onchange='this.form.submit()')
+      option(value='') Todos
+      each estadoO in estados
+        if estadoO === filtroEstado
+          option(value=estadoO selected) #{estadoO}
+        else
+          option(value=estadoO) #{estadoO}
 
-    function mostrarInputTotal(boletaId) {
-      const modal = document.getElementById('modal-' + boletaId);
-      const inputTotalDiv = modal.querySelector('.input-total');
-      if(inputTotalDiv) inputTotalDiv.style.display = 'block';
-    }
+    label(for='cliente') Buscar Cliente:
+    input#cliente(type='text', name='cliente', value=filtroCliente, placeholder='Nombre cliente')
 
   a(href="/boletas/crearBoleta", class="boton crear", style="float: right; margin-bottom: 1rem;") Crear Boleta
 
@@ -200,3 +211,33 @@ block contenido
             button.boton.accion(type="submit") Reparado
 
         button(type="button", onclick=`cerrarModal(${boleta.id})`, class="boton cerrar") Cerrar
+
+  script.
+    function abrirModal(boletaId) {
+      const modal = document.getElementById('modal-' + boletaId);
+      if (modal) modal.style.display = 'block';
+      // Ocultar todos los inputs de total al abrir el modal
+      const inputTotalDiv = modal.querySelector('.input-total');
+      if(inputTotalDiv) inputTotalDiv.style.display = 'none';
+    }
+
+    function cerrarModal(boletaId) {
+      const modal = document.getElementById('modal-' + boletaId);
+      if (modal) modal.style.display = 'none';
+    }
+
+    function mostrarInputTotal(boletaId) {
+      const modal = document.getElementById('modal-' + boletaId);
+      const inputTotalDiv = modal.querySelector('.input-total');
+      if(inputTotalDiv) inputTotalDiv.style.display = 'block';
+    }
+
+    // Búsqueda con debounce para filtro cliente
+    let timeoutId;
+    const inputCliente = document.getElementById('cliente');
+    inputCliente.addEventListener('input', function() {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        document.getElementById('filtros').submit();
+      }, 500);
+    });
