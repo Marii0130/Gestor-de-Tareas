@@ -12,6 +12,7 @@ const condicionesOpciones = [
   'sin cable', 'sin control', 'pantalla rayada', 'desarmado'
 ];
 
+// Listar todas las boletas
 export const consultarTodos = async (req: Request, res: Response): Promise<void> => {
   try {
     const boletas = await boletaRepo.find({ relations: ['cliente'] });
@@ -21,28 +22,17 @@ export const consultarTodos = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const consultarUno = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
-  try {
-    return await boletaRepo.findOne({ where: { id }, relations: ['cliente'] });
-  } catch (error) {
-    return null;
-  }
-};
-
+// Mostrar formulario de creación
 export const mostrarCrear = async (req: Request, res: Response) => {
-  try {
-    res.render('crearBoleta', {
-      pagina: 'Crear Boleta',
-      condicionesOpciones,
-      errors: [],
-      boleta: {}
-    });
-  } catch (error) {
-    res.status(500).render('error', { mensaje: 'Error al cargar formulario' });
-  }
+  res.render('crearBoleta', {
+    pagina: 'Crear Boleta',
+    condicionesOpciones,
+    errors: [],
+    boleta: {}
+  });
 };
 
+// Insertar nueva boleta
 export const insertar = async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -76,7 +66,7 @@ export const insertar = async (req: Request, res: Response) => {
       fecha_ingreso: req.body.fecha_ingreso,
       fecha_reparacion: req.body.fecha_reparacion || null,
       senado: parseFloat(req.body.senado) || 0,
-      costo: parseFloat(req.body.costo) || 0,    // <-- COSTO agregado
+      costo: parseFloat(req.body.costo) || 0,
       total: parseFloat(req.body.total) || 0,
       cliente
     });
@@ -89,84 +79,62 @@ export const insertar = async (req: Request, res: Response) => {
   }
 };
 
-export const modificar = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
+// Cambiar estado
+export const actualizarEstado = async (req: Request, res: Response) => {
+  const { id, nuevoEstado } = req.params;
 
-  try {
-    const boleta = await boletaRepo.findOne({
-      where: { id },
-      relations: ['cliente']
-    });
+  const boleta = await boletaRepo.findOneBy({ id: parseInt(id) });
 
-    if (!boleta || !boleta.cliente) {
-      return res.status(404).render('error', { mensaje: 'Registro no encontrado' });
-    }
-
-    boleta.articulo = req.body.articulo;
-    boleta.marca = req.body.marca;
-    boleta.modelo = req.body.modelo;
-    boleta.falla = req.body.falla;
-    boleta.estado = req.body.estado;
-    boleta.condiciones_iniciales = Array.isArray(req.body.condiciones_iniciales)
-      ? req.body.condiciones_iniciales.join(', ')
-      : req.body.condiciones_iniciales;
-    boleta.observaciones = req.body.observaciones;
-    boleta.fecha_ingreso = req.body.fecha_ingreso;
-    boleta.fecha_reparacion = req.body.fecha_reparacion || null;
-    boleta.senado = parseFloat(req.body.senado) || 0;
-    boleta.costo = parseFloat(req.body.costo) || 0;  // <-- COSTO agregado
-    boleta.total = parseFloat(req.body.total) || 0;
-
-    boleta.cliente.nombre = req.body.clienteNombre;
-    boleta.cliente.telefono = req.body.clienteTelefono;
-    boleta.cliente.domicilio = req.body.clienteDomicilio || '';
-
-    await AppDataSource.transaction(async transactionalEntityManager => {
-      await transactionalEntityManager.save(boleta.cliente);
-      await transactionalEntityManager.save(boleta);
-    });
-
-    res.redirect('/boletas/listarBoletas');
-  } catch (error) {
-    console.error('Error al modificar:', error);
-    res.status(500).render('error', {
-      mensaje: 'Error al modificar boleta',
-      detalles: error instanceof Error ? error.message : 'Error desconocido'
+  if (!boleta) {
+    return res.status(404).render('error', {
+      mensaje: 'Boleta no encontrada',
+      detalles: `ID: ${id}`
     });
   }
+
+  // Si se está enviando presupuesto, se guarda también el total
+  if (nuevoEstado === 'presupuesto_enviado' && req.body.total) {
+    boleta.total = parseFloat(req.body.total);
+  }
+
+  boleta.estado = nuevoEstado;
+
+  // Si se marca como reparado, se guarda la fecha actual como fecha_reparacion
+  if (nuevoEstado === 'reparado') {
+    boleta.fecha_reparacion = new Date();
+  }
+
+  await boletaRepo.save(boleta);
+  res.redirect('/boletas/listarBoletas');
 };
 
-export const eliminar = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
+// Obtener una boleta por ID
+export const obtenerPorId = async (req: Request, res: Response) => {
+  const { id } = req.params;
 
   try {
     const boleta = await boletaRepo.findOne({
-      where: { id },
+      where: { id: parseInt(id) },
       relations: ['cliente']
     });
 
     if (!boleta) {
-      return res.status(404).json({ success: false, message: 'Boleta no encontrada' });
+      return res.status(404).render('error', {
+        mensaje: 'Boleta no encontrada',
+        detalles: `ID: ${id}`
+      });
     }
 
-    await AppDataSource.transaction(async transactionalEntityManager => {
-      await transactionalEntityManager.remove(Boleta, boleta);
-
-      if (boleta.cliente) {
-        await transactionalEntityManager.remove(Cliente, boleta.cliente);
-      }
-    });
-
-    res.redirect('/boletas/listarBoletas');
+    res.render('detalleBoleta', { boleta });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('Error al buscar boleta por ID:', error);
     res.status(500).render('error', {
-      mensaje: 'Error al eliminar registro',
-      detalles: errorMessage
+      mensaje: 'Error interno al buscar boleta'
     });
   }
 };
 
+// Validaciones
 export const validar = () => [
   body('clienteNombre').notEmpty().withMessage('El nombre del cliente es obligatorio'),
   body('clienteTelefono').notEmpty().withMessage('El teléfono del cliente es obligatorio'),
@@ -176,6 +144,6 @@ export const validar = () => [
   body('falla').notEmpty().withMessage('La falla es obligatoria'),
   body('fecha_ingreso').notEmpty().withMessage('La fecha de ingreso es obligatoria').isDate(),
   body('senado').optional().isFloat({ min: 0 }),
-  body('costo').optional().isFloat({ min: 0 }).withMessage('El costo debe ser un número positivo'), // <-- COSTO validación
+  body('costo').optional().isFloat({ min: 0 }).withMessage('El costo debe ser un número positivo'),
   body('total').optional().isFloat({ min: 0 })
 ];

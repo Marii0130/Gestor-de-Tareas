@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validar = exports.eliminar = exports.modificar = exports.insertar = exports.mostrarCrear = exports.consultarUno = exports.consultarTodos = void 0;
+exports.validar = exports.obtenerPorId = exports.actualizarEstado = exports.insertar = exports.mostrarCrear = exports.consultarTodos = void 0;
 const conexion_1 = require("../db/conexion");
 const boletaModel_1 = require("../models/boletaModel");
 const clienteModel_1 = require("../models/clienteModel");
@@ -20,6 +20,7 @@ const condicionesOpciones = [
     'con cable', 'con control', 'pantalla manchada', 'faltan tornillos',
     'sin cable', 'sin control', 'pantalla rayada', 'desarmado'
 ];
+// Listar todas las boletas
 const consultarTodos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const boletas = yield boletaRepo.find({ relations: ['cliente'] });
@@ -30,30 +31,17 @@ const consultarTodos = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.consultarTodos = consultarTodos;
-const consultarUno = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const id = parseInt(req.params.id, 10);
-    try {
-        return yield boletaRepo.findOne({ where: { id }, relations: ['cliente'] });
-    }
-    catch (error) {
-        return null;
-    }
-});
-exports.consultarUno = consultarUno;
+// Mostrar formulario de creación
 const mostrarCrear = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        res.render('crearBoleta', {
-            pagina: 'Crear Boleta',
-            condicionesOpciones,
-            errors: [],
-            boleta: {}
-        });
-    }
-    catch (error) {
-        res.status(500).render('error', { mensaje: 'Error al cargar formulario' });
-    }
+    res.render('crearBoleta', {
+        pagina: 'Crear Boleta',
+        condicionesOpciones,
+        errors: [],
+        boleta: {}
+    });
 });
 exports.mostrarCrear = mostrarCrear;
+// Insertar nueva boleta
 const insertar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
@@ -84,7 +72,7 @@ const insertar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             fecha_ingreso: req.body.fecha_ingreso,
             fecha_reparacion: req.body.fecha_reparacion || null,
             senado: parseFloat(req.body.senado) || 0,
-            costo: parseFloat(req.body.costo) || 0, // <-- COSTO agregado
+            costo: parseFloat(req.body.costo) || 0,
             total: parseFloat(req.body.total) || 0,
             cliente
         });
@@ -97,75 +85,54 @@ const insertar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.insertar = insertar;
-const modificar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const id = parseInt(req.params.id);
-    try {
-        const boleta = yield boletaRepo.findOne({
-            where: { id },
-            relations: ['cliente']
-        });
-        if (!boleta || !boleta.cliente) {
-            return res.status(404).render('error', { mensaje: 'Registro no encontrado' });
-        }
-        boleta.articulo = req.body.articulo;
-        boleta.marca = req.body.marca;
-        boleta.modelo = req.body.modelo;
-        boleta.falla = req.body.falla;
-        boleta.estado = req.body.estado;
-        boleta.condiciones_iniciales = Array.isArray(req.body.condiciones_iniciales)
-            ? req.body.condiciones_iniciales.join(', ')
-            : req.body.condiciones_iniciales;
-        boleta.observaciones = req.body.observaciones;
-        boleta.fecha_ingreso = req.body.fecha_ingreso;
-        boleta.fecha_reparacion = req.body.fecha_reparacion || null;
-        boleta.senado = parseFloat(req.body.senado) || 0;
-        boleta.costo = parseFloat(req.body.costo) || 0; // <-- COSTO agregado
-        boleta.total = parseFloat(req.body.total) || 0;
-        boleta.cliente.nombre = req.body.clienteNombre;
-        boleta.cliente.telefono = req.body.clienteTelefono;
-        boleta.cliente.domicilio = req.body.clienteDomicilio || '';
-        yield conexion_1.AppDataSource.transaction((transactionalEntityManager) => __awaiter(void 0, void 0, void 0, function* () {
-            yield transactionalEntityManager.save(boleta.cliente);
-            yield transactionalEntityManager.save(boleta);
-        }));
-        res.redirect('/boletas/listarBoletas');
-    }
-    catch (error) {
-        console.error('Error al modificar:', error);
-        res.status(500).render('error', {
-            mensaje: 'Error al modificar boleta',
-            detalles: error instanceof Error ? error.message : 'Error desconocido'
+// Cambiar estado
+const actualizarEstado = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, nuevoEstado } = req.params;
+    const boleta = yield boletaRepo.findOneBy({ id: parseInt(id) });
+    if (!boleta) {
+        return res.status(404).render('error', {
+            mensaje: 'Boleta no encontrada',
+            detalles: `ID: ${id}`
         });
     }
+    // Si se está enviando presupuesto, se guarda también el total
+    if (nuevoEstado === 'presupuesto_enviado' && req.body.total) {
+        boleta.total = parseFloat(req.body.total);
+    }
+    boleta.estado = nuevoEstado;
+    // Si se marca como reparado, se guarda la fecha actual como fecha_reparacion
+    if (nuevoEstado === 'reparado') {
+        boleta.fecha_reparacion = new Date();
+    }
+    yield boletaRepo.save(boleta);
+    res.redirect('/boletas/listarBoletas');
 });
-exports.modificar = modificar;
-const eliminar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const id = parseInt(req.params.id, 10);
+exports.actualizarEstado = actualizarEstado;
+// Obtener una boleta por ID
+const obtenerPorId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
     try {
         const boleta = yield boletaRepo.findOne({
-            where: { id },
+            where: { id: parseInt(id) },
             relations: ['cliente']
         });
         if (!boleta) {
-            return res.status(404).json({ success: false, message: 'Boleta no encontrada' });
+            return res.status(404).render('error', {
+                mensaje: 'Boleta no encontrada',
+                detalles: `ID: ${id}`
+            });
         }
-        yield conexion_1.AppDataSource.transaction((transactionalEntityManager) => __awaiter(void 0, void 0, void 0, function* () {
-            yield transactionalEntityManager.remove(boletaModel_1.Boleta, boleta);
-            if (boleta.cliente) {
-                yield transactionalEntityManager.remove(clienteModel_1.Cliente, boleta.cliente);
-            }
-        }));
-        res.redirect('/boletas/listarBoletas');
+        res.render('detalleBoleta', { boleta });
     }
     catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        console.error('Error al buscar boleta por ID:', error);
         res.status(500).render('error', {
-            mensaje: 'Error al eliminar registro',
-            detalles: errorMessage
+            mensaje: 'Error interno al buscar boleta'
         });
     }
 });
-exports.eliminar = eliminar;
+exports.obtenerPorId = obtenerPorId;
+// Validaciones
 const validar = () => [
     (0, express_validator_1.body)('clienteNombre').notEmpty().withMessage('El nombre del cliente es obligatorio'),
     (0, express_validator_1.body)('clienteTelefono').notEmpty().withMessage('El teléfono del cliente es obligatorio'),
@@ -175,7 +142,7 @@ const validar = () => [
     (0, express_validator_1.body)('falla').notEmpty().withMessage('La falla es obligatoria'),
     (0, express_validator_1.body)('fecha_ingreso').notEmpty().withMessage('La fecha de ingreso es obligatoria').isDate(),
     (0, express_validator_1.body)('senado').optional().isFloat({ min: 0 }),
-    (0, express_validator_1.body)('costo').optional().isFloat({ min: 0 }).withMessage('El costo debe ser un número positivo'), // <-- COSTO validación
+    (0, express_validator_1.body)('costo').optional().isFloat({ min: 0 }).withMessage('El costo debe ser un número positivo'),
     (0, express_validator_1.body)('total').optional().isFloat({ min: 0 })
 ];
 exports.validar = validar;
