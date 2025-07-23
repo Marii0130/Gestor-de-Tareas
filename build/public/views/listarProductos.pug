@@ -59,7 +59,51 @@ block contenido
       margin-bottom: 1rem;
     }
 
+    /* Filtros */
+    .filtros {
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .filtros label {
+      margin-right: 0.5rem;
+      font-weight: bold;
+    }
+    .filtros select,
+    .filtros input[type="text"] {
+      padding: 0.3rem 0.6rem;
+      margin-right: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      width: 200px;
+    }
+    .filtros button {
+      padding: 0.4rem 1rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .filtros button:hover {
+      background-color: #0056b3;
+    }
+
   h2(style="text-align: center; margin-bottom: 1rem;") Listado de Productos
+
+  form.filtros(action="/inventario", method="GET")
+    label(for="categoria") Categoría:
+    select(name="categoria", id="categoria")
+      option(value="") Todas
+      each cat in categoriasDisponibles
+        option(value=cat selected=(filtroCategoria == cat) ? true : false)= cat
+
+    label(for="nombre") Nombre:
+    input(type="text", name="nombre", id="nombre", placeholder="Buscar por nombre...", value=filtroNombre)
+
+    button(type="submit") Filtrar
 
   .btn-contenedor
     a.btn.btn-crear(href="/inventario/crear") Nuevo Producto

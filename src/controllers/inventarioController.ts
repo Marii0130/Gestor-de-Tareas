@@ -13,10 +13,27 @@ export const categoriasDisponibles = Object.values(CategoriaProducto);
 // Consultar todos los productos
 export const listarProductos = async (req: Request, res: Response) => {
   try {
-    const productos = await productoRepo.find();
+    const { nombre = '', categoria = '' } = req.query;
+
+    // Construimos filtros
+    const queryBuilder = productoRepo.createQueryBuilder('producto');
+
+    if (categoria) {
+      queryBuilder.andWhere('producto.categoria = :categoria', { categoria });
+    }
+
+    if (nombre) {
+      queryBuilder.andWhere('LOWER(producto.nombre) LIKE :nombre', { nombre: `%${String(nombre).toLowerCase()}%` });
+    }
+
+    const productos = await queryBuilder.getMany();
+
     res.render('listarProductos', {
       productos,
-      pagina: 'Listado de Productos'
+      pagina: 'Listado de Productos',
+      filtroNombre: nombre,
+      filtroCategoria: categoria,
+      categoriasDisponibles
     });
   } catch (error) {
     res.status(500).render('error', { mensaje: 'Error al obtener productos' });

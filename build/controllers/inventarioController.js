@@ -21,10 +21,22 @@ exports.categoriasDisponibles = Object.values(productoModel_1.CategoriaProducto)
 // Consultar todos los productos
 const listarProductos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const productos = yield productoRepo.find();
+        const { nombre = '', categoria = '' } = req.query;
+        // Construimos filtros
+        const queryBuilder = productoRepo.createQueryBuilder('producto');
+        if (categoria) {
+            queryBuilder.andWhere('producto.categoria = :categoria', { categoria });
+        }
+        if (nombre) {
+            queryBuilder.andWhere('LOWER(producto.nombre) LIKE :nombre', { nombre: `%${String(nombre).toLowerCase()}%` });
+        }
+        const productos = yield queryBuilder.getMany();
         res.render('listarProductos', {
             productos,
-            pagina: 'Listado de Productos'
+            pagina: 'Listado de Productos',
+            filtroNombre: nombre,
+            filtroCategoria: categoria,
+            categoriasDisponibles: exports.categoriasDisponibles
         });
     }
     catch (error) {
