@@ -1,9 +1,19 @@
-import { Router } from 'express'
-import { mostrarFormularioGanancias, generarReporteGanancias } from '../controllers/gananciasController'
+import { Router } from 'express';
+import { 
+  mostrarFormularioCostosGanancias, 
+  generarReporteCostosGanancias, 
+  guardarReporteCostosGanancias 
+} from '../controllers/gananciasController';
 
-const router = Router()
+const router = Router();
 
-router.get('/', mostrarFormularioGanancias)
-router.post('/', generarReporteGanancias)
+// Mostrar formulario para generar reporte de costos y ganancias
+router.get('/', mostrarFormularioCostosGanancias);
 
-export default router
+// Procesar formulario y mostrar resultados
+router.post('/', generarReporteCostosGanancias);
+
+// Guardar el reporte generado en base de datos
+router.post('/guardar', guardarReporteCostosGanancias);
+
+export default router;

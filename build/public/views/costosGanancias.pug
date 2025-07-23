@@ -1,81 +1,106 @@
 extends layout
 
 block contenido
+  h2 Reporte de Costos y Ganancias
+
+  form(method="POST" action="/reportes/ganancias")
+    div
+      label(for="mes") Seleccionar mes:
+      input(type="month" name="mes" id="mesInput" required value=mes)
+
+    button(type="submit") Buscar
+
+  if datos
+    - const totalIngresos = datos.totalIngresos?.toFixed(2) || '0.00'
+    - const totalCostos = datos.totalCostos?.toFixed(2) || '0.00'
+    - const ganancia = datos.ganancia?.toFixed(2) || '0.00'
+
+    h3 Resultados para #{periodo}
+
+    .indicadores
+      .indicador
+        h4 Total Ingresos
+        p #{totalIngresos}
+      .indicador
+        h4 Total Costos
+        p #{totalCostos}
+      .indicador
+        h4 Ganancia Neta
+        p #{ganancia}
+
+    form(method="POST" action="/reportes/ganancias/guardar")
+      input(type="hidden" name="periodo" value=periodo)
+      input(type="hidden" name="totalIngresos" value=totalIngresos)
+      input(type="hidden" name="totalCostos" value=totalCostos)
+      input(type="hidden" name="ganancia" value=ganancia)
+
+      button(type="submit" id="btnGuardarReporte") Guardar Reporte
+
+      if reporteYaGenerado
+        p(style="color: red; margin-top: 0.5rem;") Ya se generó un reporte para este período.
+
+  else
+    p No hay datos para mostrar.
+
   style.
-    form {
-      margin-bottom: 1.5rem;
+    .indicadores {
       display: flex;
       gap: 1rem;
-      align-items: center;
+      margin: 1.5rem 0;
       flex-wrap: wrap;
     }
-    label {
-      font-weight: bold;
+    .indicador {
+      background-color: #f0f8ff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      flex: 1 1 220px;
+      text-align: center;
+      color: #005b96;
     }
-    input {
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+    .indicador h4 {
+      margin: 0 0 0.5rem;
     }
     button {
       background-color: #007bff;
       color: white;
+      padding: 0.6rem 1.2rem;
       border: none;
-      padding: 0.4rem 1rem;
-      border-radius: 4px;
+      border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+      transition: background-color 0.3s ease;
       margin-top: 1rem;
     }
-    th, td {
-      padding: 0.5rem 1rem;
-      border: 1px solid #ddd;
+    button:hover:not(:disabled) {
+      background-color: #0056b3;
     }
-    thead {
-      background-color: #f5f5f5;
-    }
-    tbody tr:hover {
-      background-color: #e9f2ff;
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
     }
 
-block contenido
-  h1 Reporte de Costos y Ganancias
+  script.
+    const mes = '#{mes || ''}';
+    const reporteYaGenerado = #{reporteYaGenerado ? 'true' : 'false'};
+    const hayDatos = #{datos ? 'true' : 'false'};
+    const btnGuardar = document.getElementById('btnGuardarReporte');
 
-  form(method="POST", action="/reportes/ganancias")
-    label(for="fechaInicio") Fecha inicio:
-    input(type="date", name="fechaInicio", id="fechaInicio" required)
+    function esMesValido(mes) {
+      if (!mes) return false;
+      const [anio, mesStr] = mes.split('-');
+      const mesNum = parseInt(mesStr) - 1;
+      const anioActual = new Date().getFullYear();
+      const mesActual = new Date().getMonth();
+      return parseInt(anio) < anioActual || (parseInt(anio) === anioActual && mesNum < mesActual);
+    }
 
-    label(for="fechaFin") Fecha fin:
-    input(type="date", name="fechaFin", id="fechaFin" required)
-
-    button(type="submit") Generar reporte
-
-  if resultado
-    h2 Resultado del reporte
-    p Periodo: #{resultado.fechaInicio} - #{resultado.fechaFin}
-    p Total costos: $#{resultado.totalCostos}
-    p Total ganancias: $#{resultado.totalGanancias}
-    p Promedio ganancia: $#{resultado.promedioGanancia}
-
-    table
-      thead
-        tr
-          th Cliente
-          th Fecha Entrega
-          th Total
-          th Costo
-          th Ganancia
-      tbody
-        each detalle in resultado.detalles
-          tr
-            td= detalle.boleta.cliente.nombre
-            td= new Date(detalle.boleta.fechaEntrega).toLocaleDateString()
-            td $#{detalle.total.toFixed(2)}
-            td $#{detalle.costo.toFixed(2)}
-            td $#{detalle.ganancia.toFixed(2)}
+    window.addEventListener('DOMContentLoaded', () => {
+      if (btnGuardar) {
+        const valido = esMesValido(mes);
+        btnGuardar.disabled = reporteYaGenerado || !valido;
+        if (btnGuardar.disabled && reporteYaGenerado) {
+          btnGuardar.title = "Ya existe un reporte para este período";
+        }
+      }
+    });
