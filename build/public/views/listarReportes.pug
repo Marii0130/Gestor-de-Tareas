@@ -134,19 +134,36 @@ block contenido
       contenedor.innerHTML = '';
 
       for (const clave in resumen) {
+        const valor = resumen[clave];
         const div = document.createElement('div');
         div.className = 'indicador';
 
-        // Formatear clave con mejor legibilidad, sin dañar caracteres especiales
+        // Título legible
         const titulo = clave
-          .replace(/([A-Z])/g, ' $1') // Separar camelCase
-          .replace(/_/g, ' ')         // Separar snake_case
-          .replace(/^./, l => l.toUpperCase()) // Capitaliza solo la primera letra
-          .replace('Senas', 'Señas')          // tilde correcto
+          .replace(/([A-Z])/g, ' $1')         // separa camelCase
+          .replace(/_/g, ' ')                 // reemplaza guiones bajos
+          .replace(/^./, l => l.toUpperCase()) // primera mayúscula
+          .replace('Senas', 'Señas');
 
-        const valorFormateado = typeof resumen[clave] === 'number'
-          ? `$${resumen[clave].toLocaleString('es-AR')}`
-          : resumen[clave];
+        // Lista exacta de claves que deben llevar $
+        const clavesMonetarias = [
+          'montoTotal',
+          'ganancia',
+          'total_senas',
+          'importe',
+          'totalPagado',
+          'totalPagar',
+          'costo',
+          'precio'
+        ];
+
+        const esMonetario = clavesMonetarias.includes(clave);
+
+        const valorFormateado = typeof valor === 'number'
+          ? esMonetario
+            ? `$${valor.toLocaleString('es-AR')}`
+            : valor.toLocaleString('es-AR')
+          : valor;
 
         div.innerHTML = `<strong>${titulo}:</strong><br>${valorFormateado}`;
         contenedor.appendChild(div);
