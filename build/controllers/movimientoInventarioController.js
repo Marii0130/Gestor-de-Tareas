@@ -17,13 +17,32 @@ const movimientoRepo = conexion_1.AppDataSource.getRepository(movimientoInventar
 const productoRepo = conexion_1.AppDataSource.getRepository(productoModel_1.Producto);
 const listarMovimientos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const movimientos = yield movimientoRepo.find({
-            relations: ['producto'],
-            order: { fecha: 'DESC' },
-        });
+        const filtroTipo = req.query.tipo || '';
+        const filtroMotivo = req.query.motivo || '';
+        const queryBuilder = movimientoRepo.createQueryBuilder('movimiento')
+            .leftJoinAndSelect('movimiento.producto', 'producto')
+            .orderBy('movimiento.fecha', 'DESC');
+        if (filtroTipo) {
+            queryBuilder.andWhere('movimiento.tipo = :tipo', { tipo: filtroTipo });
+        }
+        if (filtroMotivo) {
+            queryBuilder.andWhere('movimiento.motivo = :motivo', { motivo: filtroMotivo });
+        }
+        const movimientos = yield queryBuilder.getMany();
+        // Lista única de motivos existentes para llenar el selector
+        const motivosRaw = yield movimientoRepo.createQueryBuilder('m')
+            .select('DISTINCT m.motivo', 'motivo')
+            .where('m.motivo IS NOT NULL')
+            .getRawMany();
+        const motivosDisponibles = motivosRaw.map(r => r.motivo);
+        const tiposDisponibles = Object.values(movimientoInventarioModel_1.TipoMovimiento);
         res.render('listarMovimientos', {
             movimientos,
             pagina: 'Movimientos de Inventario',
+            tiposDisponibles,
+            motivosDisponibles,
+            filtroTipo,
+            filtroMotivo
         });
     }
     catch (error) {

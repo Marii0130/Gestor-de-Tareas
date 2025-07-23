@@ -50,10 +50,59 @@ block contenido
       margin-bottom: 1rem;
     }
 
+    .filtros {
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .filtros label {
+      margin-right: 0.5rem;
+      font-weight: bold;
+    }
+
+    .filtros select {
+      padding: 0.3rem 0.6rem;
+      margin-right: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      width: 220px;
+    }
+
+    .filtros button {
+      padding: 0.4rem 1rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .filtros button:hover {
+      background-color: #0056b3;
+    }
+
   h2(style="text-align: center; margin-bottom: 1rem;") Movimientos de Inventario
 
   .btn-contenedor
     a.btn.btn-crear(href="/movimientos/crear") Nuevo Movimiento
+
+  form.filtros(action="/movimientos", method="GET")
+    label(for="tipo") Tipo:
+    select(name="tipo", id="tipo")
+      option(value="") Todos
+      each t in tiposDisponibles
+        option(value=t selected=(filtroTipo == t) ? true : false)= t.charAt(0).toUpperCase() + t.slice(1)
+
+    label(for="motivo") Motivo:
+    select(name="motivo", id="motivo")
+      option(value="") Todos
+      each m in motivosDisponibles
+        option(value=m selected=(filtroMotivo == m) ? true : false)= m
+
+    button(type="submit") Filtrar
 
   if movimientos.length
     .tabla-container
