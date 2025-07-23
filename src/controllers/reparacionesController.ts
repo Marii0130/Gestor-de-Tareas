@@ -6,7 +6,7 @@ import { Boleta } from '../models/boletaModel'
 const boletaRepository = AppDataSource.getRepository(Boleta)
 
 function extraerPulgadas(articulo: string): number | null {
-  const regex = /(\d{1,2})"/
+  const regex = /(,2)"/
   const match = articulo.match(regex)
   if (match) {
     return parseInt(match[1], 10)
@@ -52,6 +52,9 @@ export const senarBoleta = async (req: Request, res: Response): Promise<void> =>
   }
 
   const senado = parseFloat(req.body.senado)
+  const cubreCosto = req.body.cubreCosto === 'si'
+  const costoManual = parseFloat(req.body.costoManual)
+
   if (isNaN(senado) || senado < 0) {
     res.status(400).send('Monto inválido.')
     return
@@ -60,6 +63,12 @@ export const senarBoleta = async (req: Request, res: Response): Promise<void> =>
   boleta.senado = senado
   boleta.fechaSenado = new Date()
   boleta.estado = 'reparando'
+
+  if (!cubreCosto && !isNaN(costoManual) && costoManual >= 0) {
+    boleta.costo = costoManual
+  } else {
+    boleta.costo = senado
+  }
 
   await boletaRepository.save(boleta)
 
@@ -204,7 +213,6 @@ export const mostrarHistorial = async (req: Request, res: Response) => {
       }
     })
 
-    // Ordenar de más reciente a más viejo
     historial.sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
 
     res.render('historialReparaciones', { historial, pagina: 'Historial de Movimientos' })

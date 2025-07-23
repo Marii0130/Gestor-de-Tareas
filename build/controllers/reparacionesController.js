@@ -15,7 +15,7 @@ const conexion_1 = require("../db/conexion");
 const boletaModel_1 = require("../models/boletaModel");
 const boletaRepository = conexion_1.AppDataSource.getRepository(boletaModel_1.Boleta);
 function extraerPulgadas(articulo) {
-    const regex = /(\d{1,2})"/;
+    const regex = /(,2)"/;
     const match = articulo.match(regex);
     if (match) {
         return parseInt(match[1], 10);
@@ -59,6 +59,8 @@ const senarBoleta = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         return;
     }
     const senado = parseFloat(req.body.senado);
+    const cubreCosto = req.body.cubreCosto === 'si';
+    const costoManual = parseFloat(req.body.costoManual);
     if (isNaN(senado) || senado < 0) {
         res.status(400).send('Monto inválido.');
         return;
@@ -66,6 +68,12 @@ const senarBoleta = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     boleta.senado = senado;
     boleta.fechaSenado = new Date();
     boleta.estado = 'reparando';
+    if (!cubreCosto && !isNaN(costoManual) && costoManual >= 0) {
+        boleta.costo = costoManual;
+    }
+    else {
+        boleta.costo = senado;
+    }
     yield boletaRepository.save(boleta);
     res.redirect('/reparaciones');
 });
@@ -182,7 +190,6 @@ const mostrarHistorial = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 });
             }
         });
-        // Ordenar de más reciente a más viejo
         historial.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
         res.render('historialReparaciones', { historial, pagina: 'Historial de Movimientos' });
     }
