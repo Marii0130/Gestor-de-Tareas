@@ -1,0 +1,64 @@
+extends layout
+
+block contenido
+  style.
+    .botones {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .botones a {
+      background-color: #007bff;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+    }
+    .botones a:hover {
+      background-color: #0056b3;
+    }
+    ul.lista-reportes {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      max-width: 600px;
+    }
+    ul.lista-reportes li {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    ul.lista-reportes li:last-child {
+      border-bottom: none;
+    }
+    ul.lista-reportes li:hover {
+      background-color: #e9f2ff;
+    }
+    ul.lista-reportes li.empty {
+      color: #666;
+      font-style: italic;
+      cursor: default;
+    }
+
+  h1 Reportes
+
+  .botones
+    a(href="/reportes/ingresos") Ingresos por Fecha
+    a(href="/reportes/reparaciones") Reparaciones Realizadas
+    a(href="/reportes/ganancias") Costos y Ganancias
+
+  h2 Lista de reportes guardados
+
+  if reportes.length === 0
+    ul.lista-reportes
+      li.empty No hay reportes guardados
+  else
+    ul.lista-reportes
+      each reporte in reportes
+        li= reporte.nombre

@@ -1,0 +1,90 @@
+extends layout
+
+block contenido
+  h2 Reporte de Ingresos por Fecha
+
+  form(method="POST" action="/reportes/ingresos/buscar")
+    div
+      label(for="tipo") Tipo de reporte:
+      select(name="tipo" id="tipo" required)
+        option(value="semanal") Semanal
+        option(value="mensual") Mensual
+
+    div#selectorSemana
+      label(for="semana") Seleccionar semana:
+      input(type="week" name="semana")
+
+    div#selectorMes(style="display: none;")
+      label(for="mes") Seleccionar mes:
+      input(type="month" name="mes")
+
+    button(type="submit") Buscar
+
+  if datos
+    h3 Resultados para #{tipo} - #{periodo}
+
+    .indicadores
+      .indicador
+        h4 Total Ventas
+        p $#{datos.totalVentas.toFixed(2)}
+      .indicador
+        h4 Total Señados
+        p $#{datos.totalSeñas.toFixed(2)}
+      .indicador
+        h4 Total Entregas
+        p $#{datos.totalEntregas.toFixed(2)}
+      .indicador
+        h4 Total Ingresos
+        p $#{datos.totalIngresos.toFixed(2)}
+
+    form(method="POST" action="/reportes/ingresos/generar")
+      // Pasar datos ocultos para enviar el reporte
+      input(type="hidden" name="tipo" value=tipo)
+      input(type="hidden" name="periodo" value=periodo)
+      input(type="hidden" name="totalIngresos" value=datos.totalIngresos)
+      input(type="hidden" name="totalVentas" value=datos.totalVentas)
+      input(type="hidden" name="totalSeñas" value=datos.totalSeñas)
+      input(type="hidden" name="totalEntregas" value=datos.totalEntregas)
+
+      button(type="submit" disabled=reporteYaGenerado) Generar Reporte
+
+      if reporteYaGenerado
+        p(style="color: red; margin-top: 0.5rem;") Ya se generó un reporte para este periodo.
+
+  style.
+    .indicadores {
+      display: flex;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+    }
+    .indicador {
+      background-color: #f0f8ff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      flex: 1 1 220px;
+      text-align: center;
+      color: #005b96;
+    }
+    .indicador h4 {
+      margin: 0 0 0.5rem;
+    }
+
+  script.
+    const tipoSelect = document.getElementById('tipo');
+    const semanaDiv = document.getElementById('selectorSemana');
+    const mesDiv = document.getElementById('selectorMes');
+
+    function actualizarSelector() {
+      if (tipoSelect.value === 'mensual') {
+        semanaDiv.style.display = 'none';
+        mesDiv.style.display = 'block';
+      } else {
+        semanaDiv.style.display = 'block';
+        mesDiv.style.display = 'none';
+      }
+    }
+
+    tipoSelect.addEventListener('change', actualizarSelector);
+    window.addEventListener('DOMContentLoaded', actualizarSelector);

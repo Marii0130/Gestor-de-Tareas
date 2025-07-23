@@ -27,6 +27,6 @@ block contenido
               td
                 ul(style="list-style: none; padding: 0; margin: 0;")
                   each detalle in venta.detalles
-                    li #{detalle.producto.nombre} × #{detalle.cantidad} @ $#{Number(detalle.precio_unitario || 0).toFixed(2)}
+                    li #{detalle.producto.nombre} × #{detalle.cantidad} = $#{Number(detalle.precio_unitario || 0).toFixed(2)}
   else
     p(style="text-align: center;") No hay ventas registradas.

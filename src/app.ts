@@ -10,6 +10,10 @@ import boletaRouter from './routes/boletaRouter';
 import inventarioRouter from './routes/inventarioRouter';
 import ventasRouter from './routes/ventasRouter';
 import reparacionesRouter from './routes/reparacionesRouter'
+import reportesRouter from './routes/reportesRouter'
+import ingresosRouter from './routes/ingresosRouter'
+import reporteReparacionesRouter from './routes/reporteReparacionesRouter'
+import gananciasRouter from './routes/gananciasRouter'
 
 const app = express();
 
@@ -50,5 +54,9 @@ app.use('/boletas', boletaRouter);
 app.use('/inventario', inventarioRouter);
 app.use('/ventas', ventasRouter);
 app.use('/reparaciones', reparacionesRouter)
+app.use('/reportes', reportesRouter)
+app.use('/reportes/ingresos', ingresosRouter)
+app.use('/reportes/reparaciones', reporteReparacionesRouter)
+app.use('/reportes/ganancias', gananciasRouter)
 
 export default app;
