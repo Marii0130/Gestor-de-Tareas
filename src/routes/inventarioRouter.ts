@@ -7,7 +7,8 @@ import {
   insertar,
   modificar,
   eliminar,
-  validarProducto,
+  validarProductoCrear,
+  validarProductoModificar,
   alertasInventario
 } from '../controllers/inventarioController';
 
@@ -34,7 +35,8 @@ router.get('/crear', async (req: Request, res: Response) => {
 });
 
 // Insertar nuevo producto
-router.post('/', validarProducto(), async (req: Request, res: Response) => {
+// Insertar nuevo producto (validación completa)
+router.post('/', validarProductoCrear(), async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).render('crearProducto', {
@@ -71,8 +73,8 @@ router.get('/modificar/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Modificar producto
-router.put('/:id', validarProducto(), async (req: Request, res: Response) => {
+// Modificar producto (validación solo para stock_minimo)
+router.put('/:id', validarProductoModificar(), async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).render('modificarProducto', {

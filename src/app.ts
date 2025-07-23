@@ -14,6 +14,7 @@ import reportesRouter from './routes/reportesRouter'
 import ingresosRouter from './routes/ingresosRouter'
 import reporteReparacionesRouter from './routes/reparacionesRealizadasRouter'
 import gananciasRouter from './routes/gananciasRouter'
+import movimientoInventarioRouter from './routes/movimientoInventarioRouter';
 
 const app = express();
 
@@ -58,5 +59,6 @@ app.use('/reportes', reportesRouter)
 app.use('/reportes/ingresos', ingresosRouter)
 app.use('/reportes/reparaciones', reporteReparacionesRouter)
 app.use('/reportes/ganancias', gananciasRouter)
+app.use('/movimientos', movimientoInventarioRouter);
 
 export default app;

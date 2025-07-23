@@ -92,7 +92,11 @@ block contenido
               td
                 form(action=`/inventario/modificar/${producto.id}`, method="GET", style="display:inline")
                   button.btn.btn-modificar(type="submit") Modificar
-                form(action=`/inventario/${producto.id}?_method=DELETE`, method="POST", style="display:inline")
-                  button.btn.btn-eliminar(type="submit", onclick="return confirm('¿Eliminar este producto?')") Eliminar
+                if producto.stock === 0
+                  form(action=`/inventario/${producto.id}?_method=DELETE`, method="POST", style="display:inline")
+                    button.btn.btn-eliminar(
+                      type="submit",
+                      onclick="return confirm('¿Estás seguro de que deseas eliminar este producto sin stock?')"
+                    ) Eliminar
   else
     p(style="text-align: center;") No hay productos registrados.

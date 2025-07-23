@@ -14,9 +14,11 @@ const conexion_1 = require("../db/conexion");
 const ventaModel_1 = require("../models/ventaModel");
 const detalleVentaModel_1 = require("../models/detalleVentaModel");
 const productoModel_1 = require("../models/productoModel");
+const movimientoInventarioModel_1 = require("../models/movimientoInventarioModel");
 const ventaRepo = conexion_1.AppDataSource.getRepository(ventaModel_1.Venta);
 const detalleRepo = conexion_1.AppDataSource.getRepository(detalleVentaModel_1.DetalleVenta);
 const productoRepo = conexion_1.AppDataSource.getRepository(productoModel_1.Producto);
+const movimientoRepo = conexion_1.AppDataSource.getRepository(movimientoInventarioModel_1.MovimientoInventario);
 const mostrarFormularioVenta = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const productos = yield productoRepo.find();
@@ -55,15 +57,24 @@ const registrarVenta = (req, res) => __awaiter(void 0, void 0, void 0, function*
             detalle.precio_unitario = producto.precio_venta;
             venta.total += cantidad * producto.precio_venta;
             venta.detalles.push(detalle);
+            // Descontar del stock
             producto.stock -= cantidad;
             yield productoRepo.save(producto);
+            // Crear movimiento de inventario tipo SALIDA
+            const movimiento = new movimientoInventarioModel_1.MovimientoInventario();
+            movimiento.producto = producto;
+            movimiento.tipo = movimientoInventarioModel_1.TipoMovimiento.SALIDA;
+            movimiento.cantidad = cantidad;
+            movimiento.motivo = 'Venta registrada';
+            movimiento.fecha = new Date();
+            yield movimientoRepo.save(movimiento);
         }
         yield ventaRepo.save(venta);
         res.redirect('/ventas/listar');
     }
     catch (error) {
         console.error(error);
-        res.status(500).send('Error al registrar la venta');
+        res.status(500).send('Error al registrar la venta.');
     }
 });
 exports.registrarVenta = registrarVenta;

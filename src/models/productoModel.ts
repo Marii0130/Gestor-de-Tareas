@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { MovimientoInventario } from './movimientoInventarioModel';
 
 export enum CategoriaProducto {
   ELECTRONICA = 'electronica',
@@ -31,4 +32,7 @@ export class Producto {
 
   @Column()
   stock_minimo: number;
+
+  @OneToMany(() => MovimientoInventario, movimiento => movimiento.producto)
+  movimientos: MovimientoInventario[];
 }

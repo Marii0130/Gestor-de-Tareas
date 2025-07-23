@@ -60,19 +60,19 @@ block contenido
   .form-container
     form(action=`/inventario/${producto.id}?_method=PUT`, method="POST")
       label(for="nombre") Nombre:
-      input(type="text", name="nombre", id="nombre", value=producto.nombre || '', required)
+      input(type="text", name="nombre", id="nombre", value=producto.nombre || '', disabled)
 
       label(for="categoria") Categoría:
-      input(type="text", name="categoria", id="categoria", value=producto.categoria || '', required)
+      input(type="text", name="categoria", id="categoria", value=producto.categoria || '', disabled)
 
       label(for="stock") Stock:
-      input(type="number", name="stock", id="stock", min="0", value=producto.stock || 0, required)
+      input(type="number", name="stock", id="stock", min="0", value=producto.stock || 0, disabled)
 
       label(for="precio_compra") Precio de Compra:
-      input(type="number", name="precio_compra", id="precio_compra", step="0.01", min="0", value=producto.precio_compra || 0, required)
+      input(type="number", name="precio_compra", id="precio_compra", step="0.01", min="0", value=producto.precio_compra || 0, disabled)
 
       label(for="precio_venta") Precio de Venta:
-      input(type="number", name="precio_venta", id="precio_venta", step="0.01", min="0", value=producto.precio_venta || 0, required)
+      input(type="number", name="precio_venta", id="precio_venta", step="0.01", min="0", value=producto.precio_venta || 0, disabled)
 
       label(for="stock_minimo") Stock Mínimo:
       input(type="number", name="stock_minimo", id="stock_minimo", min="0", value=producto.stock_minimo || 0, required)

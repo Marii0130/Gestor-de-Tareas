@@ -9,11 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.alertasInventario = exports.validarProducto = exports.eliminar = exports.modificar = exports.insertar = exports.mostrarCrear = exports.consultarUno = exports.listarProductos = exports.categoriasDisponibles = void 0;
+exports.alertasInventario = exports.validarProductoModificar = exports.validarProductoCrear = exports.eliminar = exports.modificar = exports.insertar = exports.mostrarCrear = exports.consultarUno = exports.listarProductos = exports.categoriasDisponibles = void 0;
 const conexion_1 = require("../db/conexion");
 const productoModel_1 = require("../models/productoModel");
+const movimientoInventarioModel_1 = require("../models/movimientoInventarioModel");
 const express_validator_1 = require("express-validator");
 const productoRepo = conexion_1.AppDataSource.getRepository(productoModel_1.Producto);
+const movimientoRepo = conexion_1.AppDataSource.getRepository(movimientoInventarioModel_1.MovimientoInventario);
 // Lista de categorías disponibles (como estados en boletas)
 exports.categoriasDisponibles = Object.values(productoModel_1.CategoriaProducto);
 // Consultar todos los productos
@@ -52,6 +54,7 @@ const mostrarCrear = (req, res) => {
 };
 exports.mostrarCrear = mostrarCrear;
 // Insertar nuevo producto
+// Insertar nuevo producto y registrar movimiento de entrada
 const insertar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
@@ -63,11 +66,32 @@ const insertar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
     }
     try {
-        const producto = productoRepo.create(req.body);
-        yield productoRepo.save(producto);
+        // Crear la entidad Producto con los datos recibidos
+        const producto = productoRepo.create({
+            nombre: req.body.nombre,
+            categoria: req.body.categoria,
+            stock: parseInt(req.body.stock, 10),
+            precio_compra: parseFloat(req.body.precio_compra),
+            precio_venta: parseFloat(req.body.precio_venta),
+            stock_minimo: parseInt(req.body.stock_minimo, 10)
+        });
+        // Guardar el producto en la base de datos
+        const productoGuardado = yield productoRepo.save(producto);
+        // Si stock > 0, crear movimiento de entrada
+        if (productoGuardado.stock > 0) {
+            const movimiento = movimientoRepo.create({
+                producto: { id: productoGuardado.id }, // Referencia por id para evitar error TS
+                tipo: movimientoInventarioModel_1.TipoMovimiento.ENTRADA,
+                cantidad: productoGuardado.stock,
+                motivo: 'Alta de nuevo producto',
+                fecha: new Date()
+            });
+            yield movimientoRepo.save(movimiento);
+        }
         res.redirect('/inventario');
     }
     catch (error) {
+        console.error('Error al crear producto:', error);
         res.status(500).render('error', { mensaje: 'Error al crear producto' });
     }
 });
@@ -79,7 +103,7 @@ const modificar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!errors.isEmpty()) {
         return res.status(400).render('modificarProducto', {
             errors: errors.array(),
-            producto: Object.assign(Object.assign({}, req.body), { id }),
+            producto: { id, stock_minimo: req.body.stock_minimo },
             pagina: 'Modificar Producto',
             categoriasDisponibles: exports.categoriasDisponibles
         });
@@ -88,11 +112,6 @@ const modificar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const producto = yield productoRepo.findOneBy({ id });
         if (!producto)
             return res.status(404).render('error', { mensaje: 'Producto no encontrado' });
-        producto.nombre = req.body.nombre;
-        producto.categoria = req.body.categoria;
-        producto.stock = parseInt(req.body.stock, 10);
-        producto.precio_compra = parseFloat(req.body.precio_compra);
-        producto.precio_venta = parseFloat(req.body.precio_venta);
         producto.stock_minimo = parseInt(req.body.stock_minimo, 10);
         yield productoRepo.save(producto);
         res.redirect('/inventario');
@@ -118,15 +137,19 @@ const eliminar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.eliminar = eliminar;
 // Validaciones
-const validarProducto = () => [
+const validarProductoCrear = () => [
     (0, express_validator_1.body)('nombre').notEmpty().withMessage('El nombre es obligatorio'),
     (0, express_validator_1.body)('categoria').notEmpty().withMessage('La categoría es obligatoria'),
-    (0, express_validator_1.body)('stock').isInt({ min: 0 }).withMessage('El stock debe ser un número positivo'),
+    (0, express_validator_1.body)('stock').isInt({ min: 1 }).withMessage('El stock debe ser un número entero positivo y al menos 1'),
     (0, express_validator_1.body)('precio_compra').isFloat({ min: 0 }).withMessage('El precio de compra debe ser válido'),
     (0, express_validator_1.body)('precio_venta').isFloat({ min: 0 }).withMessage('El precio de venta debe ser válido'),
-    (0, express_validator_1.body)('stock_minimo').isInt({ min: 0 }).withMessage('El stock mínimo debe ser un número positivo')
+    (0, express_validator_1.body)('stock_minimo').isInt({ min: 0 }).withMessage('El stock mínimo debe ser un número positivo o cero')
 ];
-exports.validarProducto = validarProducto;
+exports.validarProductoCrear = validarProductoCrear;
+const validarProductoModificar = () => [
+    (0, express_validator_1.body)('stock_minimo').isInt({ min: 0 }).withMessage('El stock mínimo debe ser un número positivo o cero')
+];
+exports.validarProductoModificar = validarProductoModificar;
 const alertasInventario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const productos = yield productoRepo.find();

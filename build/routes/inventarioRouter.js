@@ -37,7 +37,8 @@ router.get('/crear', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 }));
 // Insertar nuevo producto
-router.post('/', (0, inventarioController_1.validarProducto)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Insertar nuevo producto (validación completa)
+router.post('/', (0, inventarioController_1.validarProductoCrear)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
         return res.status(400).render('crearProducto', {
@@ -72,8 +73,8 @@ router.get('/modificar/:id', (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(500).render('error', { mensaje: 'Error al cargar producto', detalles: msg });
     }
 }));
-// Modificar producto
-router.put('/:id', (0, inventarioController_1.validarProducto)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Modificar producto (validación solo para stock_minimo)
+router.put('/:id', (0, inventarioController_1.validarProductoModificar)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
         return res.status(400).render('modificarProducto', {

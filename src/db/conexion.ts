@@ -8,6 +8,7 @@ import { Producto } from '../models/productoModel';
 import { Venta } from '../models/ventaModel';
 import { DetalleVenta } from '../models/detalleVentaModel';
 import { Reporte } from '../models/reporteModel';
+import { MovimientoInventario } from '../models/movimientoInventarioModel';
 
 dotenv.config();
 
@@ -37,7 +38,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [Cliente, Boleta, Producto, Venta, DetalleVenta, Reporte],
+  entities: [Cliente, Boleta, Producto, Venta, DetalleVenta, Reporte, MovimientoInventario],
   synchronize: true,
   logging: false, // Puedes activar en true para debug
 });

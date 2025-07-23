@@ -1,0 +1,77 @@
+extends layout
+
+block contenido
+  h2(style="text-align: center; margin-bottom: 1rem;") Nuevo Movimiento
+
+  if errors.length
+    ul(style="color: red; max-width: 400px; margin: auto; margin-bottom: 1rem;")
+      each error in errors
+        li= error.msg
+
+  form(action="/movimientos/crear", method="POST", style="max-width: 400px; margin: auto; display: flex; flex-direction: column; gap: 0.8rem; background: #f9f9f9; padding: 1.5rem; border-radius: 12px; border: 1px solid #ccc;")
+    label(for="productoId") Producto:
+    select(name="productoId", id="productoId", required)
+      option(value="") -- Seleccionar producto --
+      each producto in productos
+        option(value=producto.id selected=(data.productoId == producto.id))= producto.nombre
+
+    label(for="tipo") Tipo:
+    select(name="tipo", id="tipo", required)
+      option(value="") -- Seleccionar tipo --
+      option(value="entrada" selected=(data.tipo == 'entrada')) Entrada
+      option(value="salida" selected=(data.tipo == 'salida')) Salida
+
+    label(for="cantidad") Cantidad:
+    input(type="number", name="cantidad", id="cantidad", min="1", value=data.cantidad || '', required)
+
+    label(for="motivoSelect") Motivo:
+    select(name="motivoSelect", id="motivoSelect")
+      option(value="") -- Seleccionar motivo --
+      option(value="Ingreso de mercadería") Ingreso de mercadería
+      option(value="Producto defectuoso") Producto defectuoso
+      option(value="Daño por manipulación") Daño por manipulación
+      option(value="Vencimiento") Vencimiento
+      option(value="Otro") Otro
+
+    input(type="text", name="motivo", id="motivoInput", placeholder="Especificar motivo", value=data.motivo || '', style="display: none;")
+
+    button(type="submit", class="btn-registrar") Registrar Movimiento
+
+  style.
+    .btn-registrar {
+      margin-top: 1rem;
+      background-color: #4CAF50;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-registrar:hover {
+      background-color: #45a049;
+    }
+
+  script.
+    const motivoSelect = document.getElementById('motivoSelect');
+    const motivoInput = document.getElementById('motivoInput');
+
+    motivoSelect.addEventListener('change', () => {
+      if (motivoSelect.value === 'Otro') {
+        motivoInput.style.display = 'block';
+        motivoInput.required = true;
+      } else {
+        motivoInput.style.display = 'none';
+        motivoInput.required = false;
+        motivoInput.value = motivoSelect.value;
+      }
+    });
+
+    // Para mantener el motivo personalizado visible si ya estaba seleccionado
+    window.addEventListener('DOMContentLoaded', () => {
+      if (motivoSelect.value === 'Otro') {
+        motivoInput.style.display = 'block';
+        motivoInput.required = true;
+      }
+    });

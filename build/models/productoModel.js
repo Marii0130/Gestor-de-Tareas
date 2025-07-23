@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Producto = exports.CategoriaProducto = void 0;
 const typeorm_1 = require("typeorm");
+const movimientoInventarioModel_1 = require("./movimientoInventarioModel");
 var CategoriaProducto;
 (function (CategoriaProducto) {
     CategoriaProducto["ELECTRONICA"] = "electronica";
@@ -51,6 +52,10 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Number)
 ], Producto.prototype, "stock_minimo", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => movimientoInventarioModel_1.MovimientoInventario, movimiento => movimiento.producto),
+    __metadata("design:type", Array)
+], Producto.prototype, "movimientos", void 0);
 exports.Producto = Producto = __decorate([
     (0, typeorm_1.Entity)()
 ], Producto);
