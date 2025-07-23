@@ -20,30 +20,74 @@ block contenido
     .botones a:hover {
       background-color: #0056b3;
     }
-    ul.lista-reportes {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background-color: #fff;
+    }
+
+    th, td {
       border: 1px solid #ccc;
-      border-radius: 5px;
-      max-width: 600px;
+      padding: 0.8rem;
+      text-align: center;
     }
-    ul.lista-reportes li {
-      padding: 0.8rem 1rem;
-      border-bottom: 1px solid #eee;
+
+    thead tr {
+      background-color: #f5f5f5;
+    }
+
+    tbody tr:hover {
+      background-color: #eef6ff;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
-    ul.lista-reportes li:last-child {
-      border-bottom: none;
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
     }
-    ul.lista-reportes li:hover {
-      background-color: #e9f2ff;
+
+    .modal-contenido {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 700px;
+      width: 90%;
+      position: relative;
     }
-    ul.lista-reportes li.empty {
-      color: #666;
-      font-style: italic;
-      cursor: default;
+
+    .modal-cerrar {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      cursor: pointer;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .indicadores {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .indicador {
+      background-color: #f2f2f2;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      font-size: 1.2rem;
     }
 
   h1 Reportes
@@ -56,9 +100,61 @@ block contenido
   h2 Lista de reportes guardados
 
   if reportes.length === 0
-    ul.lista-reportes
-      li.empty No hay reportes guardados
+    p No hay reportes guardados.
   else
-    ul.lista-reportes
-      each reporte in reportes
-        li= reporte.nombre
+    table
+      thead
+        tr
+          th Tipo de Reporte
+          th Rango
+          th Período
+      tbody
+        each reporte in reportes
+          - const parametros = JSON.parse(reporte.parametros || '{}');
+          - const periodo = parametros.periodo || parametros.semana || parametros.mes || '—';
+          tr(data-resumen=reporte.resumen, data-tipo=reporte.tipo, data-id=reporte.id, onclick='mostrarModal(this)')
+            td= reporte.tipo
+            td= parametros.tipo || '—'
+            td= periodo
+
+  // Modal
+  .modal#modal
+    .modal-contenido
+      span.modal-cerrar(onclick="cerrarModal()") ✖
+      h3 Detalles del Reporte
+      .indicadores#indicadores
+        // generado dinámicamente
+      br
+      button(onclick="cerrarModal()") Cerrar
+
+  script.
+    function mostrarModal(fila) {
+      const resumen = JSON.parse(fila.dataset.resumen || '{}');
+      const contenedor = document.getElementById('indicadores');
+      contenedor.innerHTML = '';
+
+      for (const clave in resumen) {
+        const div = document.createElement('div');
+        div.className = 'indicador';
+
+        // Formatear clave con mejor legibilidad, sin dañar caracteres especiales
+        const titulo = clave
+          .replace(/([A-Z])/g, ' $1') // Separar camelCase
+          .replace(/_/g, ' ')         // Separar snake_case
+          .replace(/^./, l => l.toUpperCase()) // Capitaliza solo la primera letra
+          .replace('Senas', 'Señas')          // tilde correcto
+
+        const valorFormateado = typeof resumen[clave] === 'number'
+          ? `$${resumen[clave].toLocaleString('es-AR')}`
+          : resumen[clave];
+
+        div.innerHTML = `<strong>${titulo}:</strong><br>${valorFormateado}`;
+        contenedor.appendChild(div);
+      }
+
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+    }

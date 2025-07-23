@@ -1,0 +1,81 @@
+extends layout
+
+block contenido
+  style.
+    form {
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    label {
+      font-weight: bold;
+    }
+    input {
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ddd;
+    }
+    thead {
+      background-color: #f5f5f5;
+    }
+    tbody tr:hover {
+      background-color: #e9f2ff;
+    }
+
+block contenido
+  h1 Reporte de Costos y Ganancias
+
+  form(method="POST", action="/reportes/ganancias")
+    label(for="fechaInicio") Fecha inicio:
+    input(type="date", name="fechaInicio", id="fechaInicio" required)
+
+    label(for="fechaFin") Fecha fin:
+    input(type="date", name="fechaFin", id="fechaFin" required)
+
+    button(type="submit") Generar reporte
+
+  if resultado
+    h2 Resultado del reporte
+    p Periodo: #{resultado.fechaInicio} - #{resultado.fechaFin}
+    p Total costos: $#{resultado.totalCostos}
+    p Total ganancias: $#{resultado.totalGanancias}
+    p Promedio ganancia: $#{resultado.promedioGanancia}
+
+    table
+      thead
+        tr
+          th Cliente
+          th Fecha Entrega
+          th Total
+          th Costo
+          th Ganancia
+      tbody
+        each detalle in resultado.detalles
+          tr
+            td= detalle.boleta.cliente.nombre
+            td= new Date(detalle.boleta.fechaEntrega).toLocaleDateString()
+            td $#{detalle.total.toFixed(2)}
+            td $#{detalle.costo.toFixed(2)}
+            td $#{detalle.ganancia.toFixed(2)}

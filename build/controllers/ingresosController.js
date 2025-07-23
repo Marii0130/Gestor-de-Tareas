@@ -18,16 +18,47 @@ const reporteModel_1 = require("../models/reporteModel");
 const repoVenta = conexion_1.AppDataSource.getRepository(ventaModel_1.Venta);
 const repoBoleta = conexion_1.AppDataSource.getRepository(boletaModel_1.Boleta);
 const repoReporte = conexion_1.AppDataSource.getRepository(reporteModel_1.Reporte);
+// 🔧 Utilidades para formatear fechas
+function obtenerRangoSemana(semana) {
+    const [anioStr, semanaStr] = semana.split('-W');
+    const anio = parseInt(anioStr, 10);
+    const semanaNum = parseInt(semanaStr, 10);
+    const primerDia = new Date(`${anio}-01-01`);
+    const diasOffset = (semanaNum - 1) * 7;
+    const lunes = new Date(primerDia.getTime() + diasOffset * 86400000);
+    lunes.setDate(lunes.getDate() - lunes.getDay() + 1); // lunes real
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
+    const formato = (d) => `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1)
+        .toString()
+        .padStart(2, '0')}/${d.getFullYear()}`;
+    return `${formato(lunes)} - ${formato(domingo)}`;
+}
+function obtenerRangoMensual(mes) {
+    const [anioStr, mesStr] = mes.split('-');
+    const anio = parseInt(anioStr, 10);
+    const mesIndex = parseInt(mesStr, 10) - 1;
+    const inicio = new Date(anio, mesIndex, 1);
+    const fin = new Date(anio, mesIndex + 1, 0);
+    const formato = (d) => `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1)
+        .toString()
+        .padStart(2, '0')}/${d.getFullYear()}`;
+    return `${formato(inicio)} - ${formato(fin)}`;
+}
 // 1. Mostrar formulario sin datos
 const mostrarFormularioIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.render('ingresosPorFecha', { datos: null, tipo: null, periodo: null });
+    res.render('ingresosPorFecha', {
+        datos: null,
+        tipo: null,
+        periodo: null,
+        reporteYaGenerado: false
+    });
 });
 exports.mostrarFormularioIngresos = mostrarFormularioIngresos;
 // 2. Buscar ingresos y mostrar resultados
 const buscarIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { tipo, semana, mes } = req.body;
-    let fechaInicio, fechaFin;
-    let periodo = '';
+    let fechaInicio, fechaFin, periodo = '';
     if (tipo === 'semanal' && semana) {
         const [anio, semanaStr] = semana.split('-W');
         const semanaNum = parseInt(semanaStr);
@@ -37,25 +68,28 @@ const buscarIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function*
         fechaInicio.setDate(fechaInicio.getDate() - fechaInicio.getDay() + 1);
         fechaFin = new Date(fechaInicio);
         fechaFin.setDate(fechaFin.getDate() + 6);
-        periodo = semana;
+        periodo = obtenerRangoSemana(semana);
     }
     else if (tipo === 'mensual' && mes) {
         const [anio, mesStr] = mes.split('-');
         const mesNum = parseInt(mesStr);
         fechaInicio = new Date(Number(anio), mesNum - 1, 1);
         fechaFin = new Date(Number(anio), mesNum, 0);
-        periodo = mes;
+        periodo = obtenerRangoMensual(mes);
     }
     else {
-        // Si no hay fecha válida, renderizamos sin datos
-        return res.render('ingresosPorFecha', { datos: null, tipo: null, periodo: null });
+        return res.render('ingresosPorFecha', {
+            datos: null,
+            tipo: null,
+            periodo: null,
+            reporteYaGenerado: false
+        });
     }
-    // Ventas registradas
+    // Buscar ingresos
     const ventas = yield repoVenta.find({
         where: { fecha: (0, typeorm_1.Between)(fechaInicio, fechaFin) }
     });
     const totalVentas = ventas.reduce((sum, v) => sum + Number(v.total || 0), 0);
-    // Señales de boletas (boletas con seña, en estado 'reparando' o posterior)
     const boletasConSeña = yield repoBoleta.find({
         where: {
             fechaSenado: (0, typeorm_1.Between)(fechaInicio, fechaFin),
@@ -63,7 +97,6 @@ const buscarIngresos = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
     });
     const totalSeñas = boletasConSeña.reduce((sum, b) => sum + Number(b.senado || 0), 0);
-    // Entregas de boletas (solo las que fueron reparadas)
     const boletasEntregadas = yield repoBoleta.find({
         where: {
             fechaEntrega: (0, typeorm_1.Between)(fechaInicio, fechaFin),
@@ -106,6 +139,6 @@ const generarReporteIngresos = (req, res) => __awaiter(void 0, void 0, void 0, f
         })
     });
     yield repoReporte.save(nuevoReporte);
-    res.redirect('/reportes'); // Cambia esta ruta si quieres ir a otro lugar después de guardar
+    res.redirect('/reportes');
 });
 exports.generarReporteIngresos = generarReporteIngresos;
